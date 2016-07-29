@@ -1,0 +1,1737 @@
+ADD TABLE "so_mstr"
+  AREA "TRANSACTION"
+  DESCRIPTION "Sales Order Master"
+  FROZEN
+  DUMP-NAME "so_mstr"
+  TABLE-TRIGGER "REPLICATION-DELETE" NO-OVERRIDE PROCEDURE "sord.t" CRC "?" 
+  TABLE-TRIGGER "REPLICATION-WRITE" NO-OVERRIDE PROCEDURE "sorw.t" CRC "?" 
+  TABLE-TRIGGER "Write" NO-OVERRIDE PROCEDURE "sow.t" CRC "?" 
+
+ADD FIELD "so_nbr" OF "so_mstr" AS character 
+  DESCRIPTION "A unique code used to identify a specific sales order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Sales Order"
+  POSITION 2
+  MAX-WIDTH 80
+  COLUMN-LABEL "Order"
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "so_cust" OF "so_mstr" AS character 
+  DESCRIPTION "The address code for the customer placing the order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Sold-To"
+  POSITION 3
+  MAX-WIDTH 80
+  ORDER 20
+
+ADD FIELD "so_ship" OF "so_mstr" AS character 
+  DESCRIPTION "The address code for the customer's shipping address."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Ship-To"
+  POSITION 4
+  MAX-WIDTH 80
+  ORDER 30
+
+ADD FIELD "so_ord_date" OF "so_mstr" AS date 
+  DESCRIPTION "The date the order was entered into the system."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Order Date"
+  POSITION 5
+  MAX-WIDTH 4
+  COLUMN-LABEL "Ord Date"
+  VALEXP "{gppswd.v &field = ""so_ord_date""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 40
+
+ADD FIELD "so_req_date" OF "so_mstr" AS date 
+  DESCRIPTION "The date the customer wants to receive the order."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Required Date"
+  POSITION 6
+  MAX-WIDTH 4
+  COLUMN-LABEL "Required"
+  ORDER 50
+
+ADD FIELD "so_due_date" OF "so_mstr" AS date 
+  DESCRIPTION "The date the order is to be shipped.  Default is today plus LT."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Due Date"
+  POSITION 7
+  MAX-WIDTH 4
+  COLUMN-LABEL "Due"
+  ORDER 60
+
+ADD FIELD "so_rmks" OF "so_mstr" AS character 
+  DESCRIPTION "The user's remarks regarding this sales order."
+  FORMAT "x(40)"
+  INITIAL ""
+  LABEL "Remarks"
+  POSITION 8
+  MAX-WIDTH 94
+  ORDER 70
+
+ADD FIELD "so_cr_terms" OF "so_mstr" AS character 
+  DESCRIPTION "A code indicating the credit terms. (defaults to customer terms)."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Credit Terms"
+  POSITION 9
+  MAX-WIDTH 80
+  COLUMN-LABEL "Terms"
+  VALEXP "{gppswd.v &field = ""so_cr_terms""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 80
+
+ADD FIELD "so_fob" OF "so_mstr" AS character 
+  DESCRIPTION "The point at which legal title to the shipped goods changes hands."
+  FORMAT "x(20)"
+  INITIAL ""
+  LABEL "FOB Point"
+  POSITION 10
+  MAX-WIDTH 40
+  VALEXP "{gpcode.v so_fob }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 90
+
+ADD FIELD "so_po" OF "so_mstr" AS character 
+  DESCRIPTION "The customer purchase order number associated with the sales order."
+  FORMAT "x(22)"
+  INITIAL ""
+  LABEL "Purchase Order"
+  POSITION 11
+  MAX-WIDTH 44
+  ORDER 100
+
+ADD FIELD "so_shipvia" OF "so_mstr" AS character 
+  DESCRIPTION "A note indicating how this order should be shipped."
+  FORMAT "x(20)"
+  INITIAL ""
+  LABEL "Ship Via"
+  POSITION 12
+  MAX-WIDTH 44
+  VALEXP "{gpcode.v so_shipvia }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 110
+
+ADD FIELD "so_partial" OF "so_mstr" AS logical 
+  DESCRIPTION "Not used."
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Partial OK"
+  POSITION 13
+  MAX-WIDTH 1
+  COLUMN-LABEL "Partial"
+  ORDER 120
+
+ADD FIELD "so_print_so" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag indicating if the sales order is to be printed."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Print Sales Order"
+  POSITION 14
+  MAX-WIDTH 1
+  COLUMN-LABEL "Print SO"
+  ORDER 130
+
+ADD FIELD "so_inv_nbr" OF "so_mstr" AS character 
+  DESCRIPTION "The invoice number that is associated with this sales order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Invoice Number"
+  POSITION 15
+  MAX-WIDTH 80
+  COLUMN-LABEL "Invoice"
+  VALEXP "{gppswd.v &field = ""so_inv_nbr""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 140
+
+ADD FIELD "so_pr_list" OF "so_mstr" AS character 
+  DESCRIPTION "A code indicating the price list to be used for this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Manual"
+  POSITION 16
+  MAX-WIDTH 80
+  COLUMN-LABEL "Disc Tbl"
+  VALEXP "{gppswd.v &field = ""so_pr_list""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 150
+
+ADD FIELD "so_xslspsn" OF "so_mstr" AS character 
+  DESCRIPTION "Obsolete.  Replaced by so_slspsn (extent 4)."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Salesperson"
+  POSITION 17
+  MAX-WIDTH 164
+  COLUMN-LABEL "Salespsn"
+  EXTENT 2
+  ORDER 160
+
+ADD FIELD "so_source" OF "so_mstr" AS character 
+  DESCRIPTION "A code indicating the source of the order. (ie. Telephone, Mail)."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Order Source"
+  POSITION 18
+  MAX-WIDTH 80
+  COLUMN-LABEL "Source"
+  VALEXP "{gpcode.v so_source }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 170
+
+ADD FIELD "so_xcomm_pct" OF "so_mstr" AS decimal 
+  DESCRIPTION "Obsolete.  Replaced by so_comm_pct (extent 4)."
+  FORMAT ">>9.99%"
+  INITIAL "0"
+  LABEL "Commission"
+  POSITION 19
+  MAX-WIDTH 80
+  COLUMN-LABEL "Comm%"
+  EXTENT 2
+  DECIMALS 10
+  ORDER 180
+
+ADD FIELD "so_cr_card" OF "so_mstr" AS character 
+  DESCRIPTION "A code indicating the credit card used to pay for the order."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Credit Card"
+  POSITION 20
+  MAX-WIDTH 30
+  COLUMN-LABEL "Card"
+  VALEXP "{gpcode.v so_cr_card }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 190
+
+ADD FIELD "so_print_pl" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag indicating if a packing list should be printed."
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Print Pack List"
+  POSITION 21
+  MAX-WIDTH 1
+  COLUMN-LABEL "Print Pack"
+  ORDER 200
+
+ADD FIELD "so_cr_init" OF "so_mstr" AS character 
+  DESCRIPTION "The initials of the person who approved credit for this order."
+  FORMAT "x(3)"
+  INITIAL ""
+  LABEL "Cr Initials"
+  POSITION 22
+  MAX-WIDTH 30
+  COLUMN-LABEL "Initials"
+  VALEXP "{gpcode.v so_cr_init }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 210
+
+ADD FIELD "so_stat" OF "so_mstr" AS character 
+  DESCRIPTION "A code indicating the status of this order. (Hold is HU or HC)."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Action Status"
+  POSITION 23
+  MAX-WIDTH 30
+  COLUMN-LABEL "St"
+  VALEXP "{gpcode.v so_stat }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 220
+
+ADD FIELD "so__qad01" OF "so_mstr" AS decimal 
+  DESCRIPTION "Not used, reserved for qad use."
+  FORMAT "-z,zzz,zzz,zz9.99"
+  INITIAL "0"
+  POSITION 24
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 230
+
+ADD FIELD "so__qad02" OF "so_mstr" AS decimal 
+  DESCRIPTION "Not used, reserved for qad use."
+  FORMAT "-z,zzz,zzz,zz9.99"
+  INITIAL "0"
+  POSITION 25
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 240
+
+ADD FIELD "so__qad03" OF "so_mstr" AS decimal 
+  DESCRIPTION "Not used, reserved for qad use."
+  FORMAT "-z,zzz,zzz,zz9.99"
+  INITIAL "0"
+  POSITION 26
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 250
+
+ADD FIELD "so_disc_pct" OF "so_mstr" AS decimal 
+  DESCRIPTION "The discount percentage to be applied to the entire order."
+  FORMAT "->9.99%"
+  INITIAL "0"
+  LABEL "Disc %"
+  POSITION 27
+  MAX-WIDTH 38
+  VALEXP "{gppswd.v &field =  ""so_disc_pct""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  DECIMALS 10
+  ORDER 260
+
+ADD FIELD "so_tax_pct" OF "so_mstr" AS decimal 
+  DESCRIPTION "The percentage tax to be applied to all taxable order line items."
+  FORMAT "->9.99<%"
+  INITIAL "0"
+  LABEL "Tax"
+  POSITION 28
+  MAX-WIDTH 120
+  EXTENT 3
+  DECIMALS 10
+  ORDER 270
+
+ADD FIELD "so_prepaid" OF "so_mstr" AS decimal 
+  DESCRIPTION "The amount of prepayment.  A cash receipt must also be entered."
+  FORMAT "-z,zzz,zzz,zz9.99"
+  INITIAL "0"
+  LABEL "Prepaid"
+  POSITION 29
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 280
+
+ADD FIELD "so_to_inv" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag indicating that uninvoiced shipments against the order exist."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Ready to Invoice"
+  POSITION 30
+  MAX-WIDTH 1
+  COLUMN-LABEL "Invoice"
+  ORDER 290
+
+ADD FIELD "so_invoiced" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag indicating an invoice has been printed for this order."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Invoiced"
+  POSITION 31
+  MAX-WIDTH 1
+  ORDER 300
+
+ADD FIELD "so_ar_acct" OF "so_mstr" AS character 
+  DESCRIPTION "The general ledger accounts receivable account for this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "AR Account"
+  POSITION 32
+  MAX-WIDTH 80
+  COLUMN-LABEL "AR"
+  VALEXP "{gppswd.v &field = ""so_ar_acct""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 310
+
+ADD FIELD "so_ar_cc" OF "so_mstr" AS character 
+  DESCRIPTION "The cost center for the Accounts Receivable account."
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Cost Ctr"
+  POSITION 33
+  MAX-WIDTH 30
+  COLUMN-LABEL "CC"
+  VALEXP "{gppswd.v &field =  ""so_ar_cc""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 320
+
+ADD FIELD "so_inv_date" OF "so_mstr" AS date 
+  DESCRIPTION "The date that the invoice for this sales order was generated."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Invoice Date"
+  POSITION 34
+  MAX-WIDTH 4
+  COLUMN-LABEL "Inv Date"
+  ORDER 330
+
+ADD FIELD "so_ship_date" OF "so_mstr" AS date 
+  DESCRIPTION "The date when this order was shipped to the customer."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Ship Date"
+  POSITION 35
+  MAX-WIDTH 4
+  ORDER 340
+
+ADD FIELD "so_taxable" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag specifying if tax should be applied to this order."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Taxable"
+  POSITION 36
+  MAX-WIDTH 1
+  COLUMN-LABEL "Tax"
+  VALEXP "{gppswd.v &field = ""so_taxable""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 350
+
+ADD FIELD "so_cmtindx" OF "so_mstr" AS integer 
+  DESCRIPTION "A pointer to the comments associated with the sales order."
+  FORMAT ">>>>>>>9"
+  INITIAL "0"
+  LABEL "Comment Index"
+  POSITION 37
+  MAX-WIDTH 4
+  COLUMN-LABEL "Comment"
+  ORDER 360
+
+ADD FIELD "so__qad04" OF "so_mstr" AS integer 
+  DESCRIPTION "Not used, reserved for qad use."
+  FORMAT ">"
+  INITIAL "0"
+  POSITION 38
+  MAX-WIDTH 4
+  ORDER 370
+
+ADD FIELD "so_user1" OF "so_mstr" AS character 
+  DESCRIPTION "User field #1."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Ufld1"
+  POSITION 39
+  MAX-WIDTH 80
+  ORDER 380
+
+ADD FIELD "so_user2" OF "so_mstr" AS character 
+  DESCRIPTION "User field #2."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Ufld2"
+  POSITION 40
+  MAX-WIDTH 80
+  ORDER 390
+
+ADD FIELD "so_curr" OF "so_mstr" AS character 
+  DESCRIPTION "The currency in which to pay for the order."
+  FORMAT "x(3)"
+  INITIAL ""
+  LABEL "Currency"
+  POSITION 41
+  MAX-WIDTH 30
+  COLUMN-LABEL "Cur"
+  VALEXP "{gppswd.v &field = ""so_curr""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 400
+
+ADD FIELD "so_ex_rate" OF "so_mstr" AS decimal 
+  DESCRIPTION "Number of transaction currency units related to base currency units."
+  FORMAT ">>>>,>>>,>>9.9<<<<<<<<<"
+  INITIAL "1"
+  LABEL "Exch Rate"
+  POSITION 42
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 410
+
+ADD FIELD "so_lang" OF "so_mstr" AS character 
+  DESCRIPTION "The language for the order."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Language"
+  POSITION 43
+  MAX-WIDTH 30
+  VALEXP "{gplang.v so_lang}"
+  VALMSG "ERROR: LANGUAGE MUST EXIST. Please re-enter."
+  ORDER 420
+
+ADD FIELD "so_type" OF "so_mstr" AS character 
+  DESCRIPTION "Code to distinguish normal, quote, closed, ....orders."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Type"
+  POSITION 44
+  MAX-WIDTH 80
+  VALEXP "{gpcode.v so_type }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 430
+
+ADD FIELD "so_conf_date" OF "so_mstr" AS date 
+  DESCRIPTION "The date the sales order was confirmed."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Confirmed Date"
+  POSITION 45
+  MAX-WIDTH 4
+  COLUMN-LABEL "Confirmed"
+  ORDER 440
+
+ADD FIELD "so_rev" OF "so_mstr" AS integer 
+  DESCRIPTION "Sales order print revision number."
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Revision"
+  POSITION 46
+  MAX-WIDTH 4
+  COLUMN-LABEL "Rev"
+  ORDER 450
+
+ADD FIELD "so_bol" OF "so_mstr" AS character 
+  DESCRIPTION "The bill of lading number given by the carrier."
+  FORMAT "x(18)"
+  INITIAL ""
+  LABEL "BOL"
+  POSITION 47
+  MAX-WIDTH 40
+  ORDER 460
+
+ADD FIELD "so__qad05" OF "so_mstr" AS decimal 
+  DESCRIPTION "Not used, reserved for qad use."
+  FORMAT ">>9.9<<"
+  INITIAL "0"
+  POSITION 48
+  MAX-WIDTH 80
+  EXTENT 2
+  DECIMALS 10
+  ORDER 470
+
+ADD FIELD "so_pst" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag indicating whether Canadian Provincial tax is to be charged."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "PST"
+  POSITION 49
+  MAX-WIDTH 1
+  ORDER 480
+
+ADD FIELD "so_fst_id" OF "so_mstr" AS character 
+  DESCRIPTION "The Canadian Federal Tax Exemption License number."
+  FORMAT "x(18)"
+  INITIAL ""
+  LABEL "FST ID"
+  POSITION 50
+  MAX-WIDTH 30
+  ORDER 490
+
+ADD FIELD "so_trl1_amt" OF "so_mstr" AS decimal 
+  DESCRIPTION "The amount associated with the first trailer item."
+  FORMAT "-zzzz,zzz,zz9.99"
+  INITIAL "0"
+  LABEL "Trailer Amt 1"
+  POSITION 51
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 500
+
+ADD FIELD "so_trl1_cd" OF "so_mstr" AS character 
+  DESCRIPTION "The code for the first trailer item (defaults from soc_ctrl)."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Trailer 1"
+  POSITION 52
+  MAX-WIDTH 30
+  COLUMN-LABEL "Trl1"
+  ORDER 510
+
+ADD FIELD "so_trl2_amt" OF "so_mstr" AS decimal 
+  DESCRIPTION "The amount associated with the second trailer item."
+  FORMAT "-zzzz,zzz,zz9.99"
+  INITIAL "0"
+  LABEL "Trailer Amt 2"
+  POSITION 53
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 520
+
+ADD FIELD "so_trl2_cd" OF "so_mstr" AS character 
+  DESCRIPTION "The code for the second trailer item (defaults from soc_ctrl)."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Trailer 2"
+  POSITION 54
+  MAX-WIDTH 30
+  COLUMN-LABEL "Trl2"
+  ORDER 530
+
+ADD FIELD "so_trl3_amt" OF "so_mstr" AS decimal 
+  DESCRIPTION "The amount associated with the third trailer item."
+  FORMAT "-zzzz,zzz,zz9.99"
+  INITIAL "0"
+  LABEL "Trailer Amt 3"
+  POSITION 55
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 540
+
+ADD FIELD "so_trl3_cd" OF "so_mstr" AS character 
+  DESCRIPTION "The code for the third trailer item (defaults from soc_ctrl)."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Trailer 3"
+  POSITION 56
+  MAX-WIDTH 30
+  COLUMN-LABEL "Trl3"
+  ORDER 550
+
+ADD FIELD "so_weight" OF "so_mstr" AS decimal 
+  DESCRIPTION "Not used.  Formerly the weight of the sales order shipment."
+  FORMAT "->>>,>>>,>>9.9999"
+  INITIAL "0"
+  LABEL "Weight"
+  POSITION 57
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 560
+
+ADD FIELD "so_weight_um" OF "so_mstr" AS character 
+  DESCRIPTION "Not used.  Formerly the unit of measure for weight of the SO shipment."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Weight UM"
+  POSITION 58
+  MAX-WIDTH 30
+  COLUMN-LABEL "UM"
+  VALEXP "{gpcode.v so_weight_um }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 570
+
+ADD FIELD "so_size" OF "so_mstr" AS decimal 
+  DESCRIPTION "Not used.  Formerly the volume of the sales order shipment."
+  FORMAT "->,>>>,>>9.9<<<<<<<<"
+  INITIAL "0"
+  LABEL "Size"
+  POSITION 59
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 580
+
+ADD FIELD "so_size_um" OF "so_mstr" AS character 
+  DESCRIPTION "Not used.  Formerly the unit of measure the the SO shipment volumne."
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Size UM"
+  POSITION 60
+  MAX-WIDTH 30
+  COLUMN-LABEL "UM"
+  VALEXP "{gpcode.v so_size_um }"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 590
+
+ADD FIELD "so_cartons" OF "so_mstr" AS integer 
+  DESCRIPTION "Not used.  Formerly the number of cartons in the sales order shipment."
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "Cartons"
+  POSITION 61
+  MAX-WIDTH 4
+  ORDER 600
+
+ADD FIELD "so_site" OF "so_mstr" AS character 
+  DESCRIPTION "The default inventory site for allocations and shipments."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Site"
+  POSITION 62
+  MAX-WIDTH 80
+  VALEXP "{gpsite.v &field = so_site &blank_ok = yes}"
+  VALMSG "ERROR: INVALID SITE. Please re-enter."
+  ORDER 610
+
+ADD FIELD "so_pst_id" OF "so_mstr" AS character 
+  DESCRIPTION "The Canadian Provincial Sales Tax Exemption License number."
+  FORMAT "x(18)"
+  INITIAL ""
+  LABEL "PST ID"
+  POSITION 63
+  MAX-WIDTH 32
+  ORDER 620
+
+ADD FIELD "so_cncl_date" OF "so_mstr" AS date 
+  DESCRIPTION "Not used.  The date the sales order was cancelled."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Cancel Date"
+  POSITION 64
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cancel"
+  ORDER 630
+
+ADD FIELD "so_quote" OF "so_mstr" AS character 
+  DESCRIPTION "The number of the quote the sales order was created from (if any)."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Quote"
+  POSITION 65
+  MAX-WIDTH 80
+  ORDER 640
+
+ADD FIELD "so_taxc" OF "so_mstr" AS character 
+  DESCRIPTION "The VAT class if VAT, GST class if Canadian, tax exempt code if U.S."
+  FORMAT "x(3)"
+  INITIAL ""
+  LABEL "Tax Class"
+  POSITION 66
+  MAX-WIDTH 30
+  COLUMN-LABEL "TxC"
+  VALEXP "{gppswd.v &field = ""so_taxc""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 650
+
+ADD FIELD "so__chr01" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #1."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 67
+  MAX-WIDTH 80
+  ORDER 660
+
+ADD FIELD "so__chr02" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #2."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 68
+  MAX-WIDTH 80
+  ORDER 670
+
+ADD FIELD "so__chr03" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #3."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 69
+  MAX-WIDTH 80
+  ORDER 680
+
+ADD FIELD "so__chr04" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #4."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 70
+  MAX-WIDTH 80
+  ORDER 690
+
+ADD FIELD "so__chr05" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #5."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 71
+  MAX-WIDTH 80
+  ORDER 700
+
+ADD FIELD "so__chr06" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #6."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 72
+  MAX-WIDTH 80
+  ORDER 710
+
+ADD FIELD "so__chr07" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #7."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 73
+  MAX-WIDTH 80
+  ORDER 720
+
+ADD FIELD "so__chr08" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #8."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 74
+  MAX-WIDTH 80
+  ORDER 730
+
+ADD FIELD "so__chr09" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #9."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 75
+  MAX-WIDTH 80
+  ORDER 740
+
+ADD FIELD "so__chr10" OF "so_mstr" AS character 
+  DESCRIPTION "User custom character field #10."
+  FORMAT "x(8)"
+  INITIAL ""
+  POSITION 76
+  MAX-WIDTH 80
+  ORDER 750
+
+ADD FIELD "so__dte01" OF "so_mstr" AS date 
+  DESCRIPTION "User custom date field #1."
+  FORMAT "99/99/99"
+  INITIAL ?
+  POSITION 77
+  MAX-WIDTH 4
+  ORDER 760
+
+ADD FIELD "so__dte02" OF "so_mstr" AS date 
+  DESCRIPTION "User custom date field #2."
+  FORMAT "99/99/99"
+  INITIAL ?
+  POSITION 78
+  MAX-WIDTH 4
+  ORDER 770
+
+ADD FIELD "so__dec01" OF "so_mstr" AS decimal 
+  DESCRIPTION "User custom decimal field #1."
+  FORMAT ">>>,>>>,>>9.99"
+  INITIAL "0"
+  POSITION 79
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 780
+
+ADD FIELD "so__dec02" OF "so_mstr" AS decimal 
+  DESCRIPTION "User custom decimal field #2."
+  FORMAT ">>>,>>>,>>9.99"
+  INITIAL "0"
+  POSITION 80
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 790
+
+ADD FIELD "so__log01" OF "so_mstr" AS logical 
+  DESCRIPTION "User custom logical field #1."
+  FORMAT "yes/no"
+  INITIAL "no"
+  POSITION 81
+  MAX-WIDTH 1
+  ORDER 800
+
+ADD FIELD "so_credit" OF "so_mstr" AS logical 
+  DESCRIPTION "Determines if the Sales Order/Invoice is a Credit Memo"
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Credit"
+  POSITION 82
+  MAX-WIDTH 1
+  COLUMN-LABEL "Cr"
+  ORDER 810
+
+ADD FIELD "so_inv_cr" OF "so_mstr" AS character 
+  DESCRIPTION "The Invoice to be credit by this credit"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Invoice To Credit"
+  POSITION 83
+  MAX-WIDTH 80
+  COLUMN-LABEL "Cr Invoice"
+  ORDER 820
+
+ADD FIELD "so_project" OF "so_mstr" AS character 
+  DESCRIPTION "Project number"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Project"
+  POSITION 84
+  MAX-WIDTH 80
+  VALEXP "{gpglproj.v so_project}"
+  VALMSG "ERROR: INVALID PROJECT. Please re-enter."
+  ORDER 830
+
+ADD FIELD "so_channel" OF "so_mstr" AS character 
+  DESCRIPTION "A Code indicating what channel a Sales Order was sold into."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Channel"
+  POSITION 85
+  MAX-WIDTH 80
+  VALEXP "{gpcode.v so_channel}"
+  VALMSG "ERROR: VALUE MUST EXIST IN GENERALIZED CODES. Please re-enter."
+  ORDER 840
+
+ADD FIELD "so_pst_pct" OF "so_mstr" AS decimal 
+  DESCRIPTION "The Provincial Sales Tax rate for this Canadian sales order."
+  FORMAT "->9.99<%"
+  INITIAL "0"
+  LABEL "PST Pct"
+  POSITION 86
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 850
+
+ADD FIELD "so_fr_list" OF "so_mstr" AS character 
+  DESCRIPTION "Name of the Freight List to be used for shipping this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Freight List"
+  POSITION 87
+  MAX-WIDTH 80
+  COLUMN-LABEL "Frt List"
+  ORDER 860
+
+ADD FIELD "so_fr_terms" OF "so_mstr" AS character 
+  DESCRIPTION "Freight Terms that apply to this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Freight Terms"
+  POSITION 88
+  MAX-WIDTH 80
+  COLUMN-LABEL "Fr Terms"
+  ORDER 870
+
+ADD FIELD "so_slspsn" OF "so_mstr" AS character 
+  DESCRIPTION "The address codes of the salespersons for this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Salesperson"
+  POSITION 89
+  MAX-WIDTH 328
+  COLUMN-LABEL "Salespsn"
+  VALEXP "can-find(sp_mstr where sp_domain = global_domain and  sp_addr = so_slspsn) or so_slspsn = """""
+  VALMSG "ERROR: SALESPERSON MUST EXIST. Please re-enter."
+  EXTENT 4
+  ORDER 880
+
+ADD FIELD "so_comm_pct" OF "so_mstr" AS decimal 
+  DESCRIPTION "The commission percentage to be received by the salesperson."
+  FORMAT ">>9.99%"
+  INITIAL "0"
+  LABEL "Commission"
+  POSITION 90
+  MAX-WIDTH 160
+  COLUMN-LABEL "Comm%"
+  EXTENT 4
+  DECIMALS 10
+  ORDER 890
+
+ADD FIELD "so_inv_mthd" OF "so_mstr" AS character 
+  DESCRIPTION "The method for invoicing: EDI, Paper, Both, None."
+  FORMAT "x(1)"
+  INITIAL ""
+  LABEL "Invoices Via"
+  POSITION 91
+  MAX-WIDTH 128
+  ORDER 900
+
+ADD FIELD "so_fix_rate" OF "so_mstr" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Fixed Rate"
+  POSITION 92
+  MAX-WIDTH 1
+  COLUMN-LABEL "Fixed"
+  ORDER 910
+
+ADD FIELD "so_ent_ex" OF "so_mstr" AS decimal 
+  DESCRIPTION "The exchange rate as entered by the user (may be base/foreign)."
+  FORMAT ">>,>>9.99999<<<<<"
+  INITIAL "1"
+  LABEL "Exch Rate"
+  POSITION 93
+  MAX-WIDTH 38
+  VALEXP "{gppswd.v &field = ""so_ent_ex""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  DECIMALS 10
+  ORDER 920
+
+ADD FIELD "so_bill" OF "so_mstr" AS character 
+  DESCRIPTION "The address code for the customer paying for the order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Bill-To"
+  POSITION 94
+  MAX-WIDTH 80
+  ORDER 930
+
+ADD FIELD "so_print_bl" OF "so_mstr" AS logical 
+  DESCRIPTION "A flag indicating if a Bill of Lading should be printed."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Print Bill of Lading"
+  POSITION 95
+  MAX-WIDTH 1
+  COLUMN-LABEL "Print BOL"
+  ORDER 940
+
+ADD FIELD "so_userid" OF "so_mstr" AS character 
+  DESCRIPTION "The person who entered this transaction."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "User ID"
+  POSITION 96
+  MAX-WIDTH 80
+  ORDER 970
+
+ADD FIELD "so_tax_date" OF "so_mstr" AS date 
+  DESCRIPTION "The Date used for finding Tax Rates."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Tax Date"
+  POSITION 97
+  MAX-WIDTH 4
+  ORDER 950
+
+ADD FIELD "so_fsm_type" OF "so_mstr" AS character 
+  DESCRIPTION " mod"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "FSM Type"
+  POSITION 98
+  MAX-WIDTH 80
+  ORDER 960
+
+ADD FIELD "so_conrep" OF "so_mstr" AS character 
+  DESCRIPTION "Indicates how planning and/or shipping schedules are to be combined."
+  FORMAT "x(1)"
+  INITIAL ""
+  LABEL "Netting Logic"
+  POSITION 99
+  MAX-WIDTH 80
+  COLUMN-LABEL "C/R"
+  ORDER 980
+
+ADD FIELD "so_bank" OF "so_mstr" AS character 
+  DESCRIPTION "The code identifying the bank through which payment should be received"
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "Bank"
+  POSITION 100
+  MAX-WIDTH 30
+  ORDER 990
+
+ADD FIELD "so_tax_env" OF "so_mstr" AS character 
+  DESCRIPTION "A code to determine taxation method for this order."
+  FORMAT "x(16)"
+  INITIAL ""
+  LABEL "Tax Environment"
+  POSITION 101
+  MAX-WIDTH 30
+  COLUMN-LABEL "Tax Env"
+  ORDER 1000
+
+ADD FIELD "so_sched" OF "so_mstr" AS logical 
+  DESCRIPTION "Indicates if the order is scheduled."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Scheduled"
+  POSITION 102
+  MAX-WIDTH 1
+  ORDER 1010
+
+ADD FIELD "so_fr_min_wt" OF "so_mstr" AS decimal 
+  DESCRIPTION "Minimum weight for freight charge calculations."
+  FORMAT "->>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "Frt Min Wt"
+  POSITION 103
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 1020
+
+ADD FIELD "so_pr_list2" OF "so_mstr" AS character 
+  DESCRIPTION "A code indicating the list price list to be used for this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Price Tbl"
+  POSITION 104
+  MAX-WIDTH 80
+  COLUMN-LABEL "Pr Tbl"
+  VALEXP "{gppswd.v &field =  ""so_pr_list2""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 1030
+
+ADD FIELD "so_tax_usage" OF "so_mstr" AS character 
+  DESCRIPTION "A code which defines taxation based on intended usage of the order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Tax Usage"
+  POSITION 105
+  MAX-WIDTH 80
+  COLUMN-LABEL "TaxUsage"
+  ORDER 1040
+
+ADD FIELD "so_sa_nbr" OF "so_mstr" AS character 
+  DESCRIPTION "contract number"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Contract"
+  POSITION 106
+  MAX-WIDTH 80
+  ORDER 1050
+
+ADD FIELD "so_fix_pr" OF "so_mstr" AS logical 
+  DESCRIPTION "Default for whether prices are affected by price updates."
+  FORMAT "yes/no"
+  INITIAL "y"
+  LABEL "Fixed Price"
+  POSITION 107
+  MAX-WIDTH 1
+  VALEXP "{gppswd.v &field = ""so_fix_pr""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 1060
+
+ADD FIELD "so_sch_mthd" OF "so_mstr" AS character 
+  DESCRIPTION "The method of communicating schedules: EDI, Paper, Both."
+  FORMAT "x(1)"
+  INITIAL ""
+  LABEL "Schedules Via"
+  POSITION 108
+  MAX-WIDTH 30
+  ORDER 1070
+
+ADD FIELD "so_pricing_dt" OF "so_mstr" AS date 
+  DESCRIPTION "Default date for Pricing effectivity."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Pricing Date"
+  POSITION 109
+  MAX-WIDTH 4
+  COLUMN-LABEL "Price Dt"
+  ORDER 1100
+
+ADD FIELD "so_priced_dt" OF "so_mstr" AS date 
+  DESCRIPTION "Last date SO was priced (by Maint or reprice utility)."
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "Last Price Dt"
+  POSITION 110
+  MAX-WIDTH 4
+  COLUMN-LABEL "Last Pri"
+  ORDER 1110
+
+ADD FIELD "so_ca_nbr" OF "so_mstr" AS character 
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Call"
+  POSITION 111
+  MAX-WIDTH 80
+  VALEXP "{fspjca.v &field = so_ca_nbr &blank_ok = yes}"
+  VALMSG "ERROR: ORDER MUST EXIST. Please re-enter."
+  LENGTH 0
+  ORDER 1120
+
+ADD FIELD "so_eng_code" OF "so_mstr" AS character 
+  DESCRIPTION "Engineer who entered this order"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Engineer"
+  POSITION 112
+  MAX-WIDTH 80
+  VALEXP "{fseng.v &field=so_eng_code &blank_ok=yes}"
+  VALMSG "ERROR: Engineer does not exist.  Please re-enter."
+  ORDER 1080
+
+ADD FIELD "so_fcg_code" OF "so_mstr" AS character 
+  DESCRIPTION "The charge code for the MO (only if own consumption)"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Charge Code"
+  POSITION 113
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 1130
+
+ADD FIELD "so_ship_eng" OF "so_mstr" AS logical 
+  DESCRIPTION "Indication that ship-to engineer code (emp_mstr)"
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Ship-To Engineer"
+  POSITION 114
+  MAX-WIDTH 1
+  ORDER 1090
+
+ADD FIELD "so_crprlist" OF "so_mstr" AS character 
+  DESCRIPTION "Credit price list to be used for RMA returns."
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "Credit Price List"
+  POSITION 115
+  MAX-WIDTH 80
+  ORDER 1140
+
+ADD FIELD "so__qadc01" OF "so_mstr" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "QAD Field"
+  POSITION 116
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 1150
+
+ADD FIELD "so__qadc02" OF "so_mstr" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "QAD Field"
+  POSITION 117
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 1160
+
+ADD FIELD "so__qadc03" OF "so_mstr" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "QAD Field"
+  POSITION 118
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 1170
+
+ADD FIELD "so__qadc04" OF "so_mstr" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "QAD Field"
+  POSITION 119
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 1180
+
+ADD FIELD "so__qadc05" OF "so_mstr" AS character 
+  FORMAT "X(8)"
+  INITIAL ""
+  LABEL "QAD Field"
+  POSITION 120
+  MAX-WIDTH 80
+  LENGTH 0
+  ORDER 1190
+
+ADD FIELD "so__qadl01" OF "so_mstr" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "QAD Field"
+  POSITION 121
+  MAX-WIDTH 1
+  ORDER 1200
+
+ADD FIELD "so__qadl02" OF "so_mstr" AS logical 
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Exclude Planning Data"
+  POSITION 122
+  MAX-WIDTH 1
+  ORDER 1210
+
+ADD FIELD "so_incl_iss" OF "so_mstr" AS logical 
+  DESCRIPTION "Logical indicating whether to include weekend days"
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Include Saturday/Sunday"
+  POSITION 123
+  MAX-WIDTH 1
+  ORDER 1220
+
+ADD FIELD "so__qadi01" OF "so_mstr" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "QAD Field"
+  POSITION 124
+  MAX-WIDTH 4
+  ORDER 1230
+
+ADD FIELD "so__qadi02" OF "so_mstr" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "QAD Field"
+  POSITION 125
+  MAX-WIDTH 4
+  ORDER 1240
+
+ADD FIELD "so__qadi03" OF "so_mstr" AS integer 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "QAD Field"
+  POSITION 126
+  MAX-WIDTH 4
+  ORDER 1250
+
+ADD FIELD "so__qadd01" OF "so_mstr" AS decimal 
+  FORMAT "->>>>,>>>,>>9.99<<<"
+  INITIAL "0"
+  LABEL "QAD Field"
+  POSITION 127
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 1260
+
+ADD FIELD "so__qadd02" OF "so_mstr" AS decimal 
+  FORMAT "->>>>,>>>,>>9.99<<<"
+  INITIAL "0"
+  LABEL "QAD Field"
+  POSITION 128
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 1270
+
+ADD FIELD "so__qadd03" OF "so_mstr" AS decimal 
+  FORMAT "->>>>,>>>,>>9.99<<<"
+  INITIAL "0"
+  LABEL "QAD Field"
+  POSITION 129
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 1280
+
+ADD FIELD "so__qadt01" OF "so_mstr" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "QAD Field"
+  POSITION 130
+  MAX-WIDTH 4
+  ORDER 1290
+
+ADD FIELD "so__qadt02" OF "so_mstr" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "QAD Field"
+  POSITION 131
+  MAX-WIDTH 4
+  ORDER 1300
+
+ADD FIELD "so__qadt03" OF "so_mstr" AS date 
+  FORMAT "99/99/99"
+  INITIAL ?
+  LABEL "QAD Field"
+  POSITION 132
+  MAX-WIDTH 4
+  ORDER 1310
+
+ADD FIELD "so_auth_days" OF "so_mstr" AS integer 
+  DESCRIPTION "The number of days an authorization number must be unique."
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "AUTHNBR Unique Days"
+  POSITION 133
+  MAX-WIDTH 4
+  ORDER 1320
+
+ADD FIELD "so_cum_acct" OF "so_mstr" AS logical 
+  DESCRIPTION "Cumulative quantity accounting sales order identifier."
+  FORMAT "Cum/Req"
+  INITIAL "yes"
+  LABEL "Cumulative Accounting"
+  POSITION 134
+  MAX-WIDTH 1
+  ORDER 1330
+
+ADD FIELD "so_merge_rss" OF "so_mstr" AS logical 
+  DESCRIPTION "Identifier for merging existing required ship schedule requiremen
+ts."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Merge RSS"
+  POSITION 135
+  MAX-WIDTH 1
+  ORDER 1340
+
+ADD FIELD "so_ship_cmplt" OF "so_mstr" AS integer 
+  DESCRIPTION "The percentage shipped before a requirement is considered complet
+e."
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Ship Complete"
+  POSITION 136
+  MAX-WIDTH 4
+  VALEXP "so_ship_cmplt >= 0 and so_ship_cmplt <= 100"
+  VALMSG "Value must be between 0 and 100."
+  ORDER 1350
+
+ADD FIELD "so_bump_all" OF "so_mstr" AS logical 
+  DESCRIPTION "Dynamic unpegging of requirements for newly pegged requirements."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Unpeg"
+  POSITION 137
+  MAX-WIDTH 1
+  ORDER 1360
+
+ADD FIELD "so_primary" OF "so_mstr" AS logical 
+  DESCRIPTION "Indicates whether this SO is Primary or not."
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Primary SO"
+  POSITION 138
+  MAX-WIDTH 1
+  COLUMN-LABEL "Pr SO"
+  ORDER 1370
+  MANDATORY
+
+ADD FIELD "so_cust_po" OF "so_mstr" AS character 
+  DESCRIPTION "Customer PO number from primary SO."
+  FORMAT "x(22)"
+  INITIAL ""
+  LABEL "End Customer PO"
+  POSITION 139
+  MAX-WIDTH 44
+  COLUMN-LABEL "End Cust PO"
+  ORDER 1380
+  MANDATORY
+
+ADD FIELD "so_secondary" OF "so_mstr" AS logical 
+  DESCRIPTION "Indicates whether a sales order is a BTB order at a SBU"
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Secondary EMT Order"
+  POSITION 140
+  MAX-WIDTH 1
+  COLUMN-LABEL "Sec EMT"
+  ORDER 1390
+
+ADD FIELD "so_ship_po" OF "so_mstr" AS character 
+  DESCRIPTION "The PO to be referenced during shipping"
+  FORMAT "x(22)"
+  INITIAL ""
+  LABEL "Ship To PO"
+  POSITION 141
+  MAX-WIDTH 44
+  ORDER 1400
+
+ADD FIELD "so_ex_rate2" OF "so_mstr" AS decimal 
+  DESCRIPTION "Number of base currency units related to transaction currency units."
+  FORMAT ">>>>,>>>,>>9.9<<<<<<<<<"
+  INITIAL "1"
+  LABEL "Exch Rate 2"
+  POSITION 142
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 1410
+  MANDATORY
+
+ADD FIELD "so_ex_ratetype" OF "so_mstr" AS character 
+  DESCRIPTION "Exchange rate type."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Rate Type"
+  POSITION 143
+  MAX-WIDTH 80
+  ORDER 1420
+  MANDATORY
+
+ADD FIELD "so_div" OF "so_mstr" AS character 
+  DESCRIPTION "The APM division."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Division"
+  POSITION 144
+  MAX-WIDTH 80
+  ORDER 1430
+
+ADD FIELD "so_exru_seq" OF "so_mstr" AS integer 
+  DESCRIPTION "Sequence number of exchange rate usage."
+  FORMAT ">>>>>>>>9"
+  INITIAL "0"
+  LABEL "Sequence"
+  POSITION 145
+  MAX-WIDTH 4
+  ORDER 1440
+  MANDATORY
+
+ADD FIELD "so_app_owner" OF "so_mstr" AS character 
+  DESCRIPTION "Identifies the external application that created and will maintain information about the sales order, and that will be informed of MFG/PRO order fulfillment activity."
+  FORMAT "x(12)"
+  INITIAL ""
+  LABEL "Owner Application"
+  POSITION 146
+  MAX-WIDTH 30
+  ORDER 1450
+
+ADD FIELD "so_ar_sub" OF "so_mstr" AS character 
+  DESCRIPTION "The general ledger accounts receivable sub-account for this order."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "AR Sub-Account"
+  POSITION 147
+  MAX-WIDTH 80
+  COLUMN-LABEL "Sub-Acct"
+  VALEXP "{gppswd.v &field = ""so_ar_sub""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter."
+  ORDER 1460
+
+ADD FIELD "so_seq_order" OF "so_mstr" AS logical 
+  DESCRIPTION "Flag used to indicate if the order will be referenced on customer sequence schedules."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Sequenced"
+  POSITION 148
+  MAX-WIDTH 1
+  COLUMN-LABEL "Partial"
+  ORDER 1470
+
+ADD FIELD "so_inc_in_rss" OF "so_mstr" AS logical 
+  DESCRIPTION "Flag used to determine if sequence schedules are to be included in the Required Ship Schedule Update routine."
+  FORMAT "yes/no"
+  INITIAL "yes"
+  LABEL "Include Seq in Req Ship Sched"
+  POSITION 149
+  MAX-WIDTH 1
+  ORDER 1480
+
+ADD FIELD "so_firm_seq_days" OF "so_mstr" AS integer 
+  DESCRIPTION "The number of days of the sequence schedule to be used for planning.  A value of 0 (default) indicates the entire schedule is used as the horizon."
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Firm Days"
+  POSITION 150
+  MAX-WIDTH 4
+  ORDER 1490
+
+ADD FIELD "so_prep_tax" OF "so_mstr" AS decimal 
+  DESCRIPTION "The amount of tax that was prepaid"
+  FORMAT "->>>>,>>>,>>9.99<<<"
+  INITIAL "0"
+  LABEL "Prepaid Tax"
+  POSITION 151
+  MAX-WIDTH 38
+  VALEXP "{gppswd.v &field = ""so_prep_tax""}"
+  VALMSG "ERROR: USER DOES NOT HAVE ACCESS TO THIS FIELD. Please re-enter"
+  DECIMALS 10
+  ORDER 1500
+  MANDATORY
+
+ADD FIELD "so__qadl04" OF "so_mstr" AS logical 
+  DESCRIPTION "QAD reserved field."
+  FORMAT "yes/no"
+  INITIAL "no"
+  POSITION 152
+  MAX-WIDTH 1
+  ORDER 1510
+
+ADD FIELD "so_custref_val" OF "so_mstr" AS logical 
+  DESCRIPTION "Yes indicates that Customer Ref must always contain a valid customer item. If No, it can contain anything."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Customer Ref Is Customer Item"
+  POSITION 153
+  MAX-WIDTH 1
+  ORDER 1520
+  MANDATORY
+
+ADD FIELD "so_consignment" OF "so_mstr" AS logical 
+  DESCRIPTION "Indicates that the Sales contract is for consigned mateial. The value is defaulted to the Sales Order Line."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Consignment"
+  POSITION 154
+  MAX-WIDTH 1
+  ORDER 1530
+  MANDATORY
+
+ADD FIELD "so_max_aging_days" OF "so_mstr" AS integer 
+  DESCRIPTION "The maximum number of days consigned material is allowed to age at the customer's facility.  Zero indicates the material can age indefinitely. The value is defaulted to the Sales Order Line."
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Maximum Aging Days"
+  POSITION 155
+  MAX-WIDTH 4
+  COLUMN-LABEL "Maximum!Aging Days"
+  ORDER 1540
+  MANDATORY
+
+ADD FIELD "so_consign_loc" OF "so_mstr" AS character 
+  DESCRIPTION "The location used to represent consigned inventory at the customer's facility. The value is defaulted to the Sales Order Line."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Consignment Location"
+  POSITION 156
+  MAX-WIDTH 80
+  COLUMN-LABEL "Consignment!Location"
+  ORDER 1550
+  MANDATORY
+
+ADD FIELD "so_intrans_loc" OF "so_mstr" AS character 
+  DESCRIPTION "The location used to represent consigned material in-transit.  the value is defaulted to the Sales Order Line."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "In-Transit Location"
+  POSITION 157
+  MAX-WIDTH 80
+  COLUMN-LABEL "In-Transit!Location"
+  ORDER 1560
+  MANDATORY
+
+ADD FIELD "so_auto_replenish" OF "so_mstr" AS logical 
+  DESCRIPTION "Indicates whether a scheduled order replenishment line should automatically be added to the active schedule for the amount of the consumed quantity."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Auto Replenish"
+  POSITION 158
+  MAX-WIDTH 1
+  COLUMN-LABEL "Auto!Replenish"
+  ORDER 1570
+  MANDATORY
+
+ADD FIELD "so_revenue" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract revenue type, such as cash, accrued, deferred"
+  FORMAT "x(1)"
+  INITIAL ""
+  LABEL "Revenue Type"
+  POSITION 159
+  MAX-WIDTH 30
+  ORDER 1580
+  MANDATORY
+
+ADD FIELD "so_fsaccr_acct" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract accrued revenue account"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Accrued Revenue"
+  POSITION 160
+  MAX-WIDTH 80
+  COLUMN-LABEL "Accrued"
+  ORDER 1590
+  MANDATORY
+
+ADD FIELD "so_fsaccr_sub" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract accrued revenue sub-account"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Accrued Revenue Sub-Acct"
+  POSITION 161
+  MAX-WIDTH 80
+  ORDER 1600
+  MANDATORY
+
+ADD FIELD "so_fsaccr_cc" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract accrued revenue cost center"
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Accrued Revenue CC"
+  POSITION 162
+  MAX-WIDTH 30
+  ORDER 1610
+  MANDATORY
+
+ADD FIELD "so_fsdef_acct" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract deferred revenue account"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Deferred Revenue"
+  POSITION 163
+  MAX-WIDTH 80
+  COLUMN-LABEL "Deferred"
+  ORDER 1620
+  MANDATORY
+
+ADD FIELD "so_fsdef_sub" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract deferred revenue sub-account"
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Deferred Revenue Sub-Acct"
+  POSITION 164
+  MAX-WIDTH 80
+  ORDER 1630
+  MANDATORY
+
+ADD FIELD "so_fsdef_cc" OF "so_mstr" AS character 
+  DESCRIPTION "Service contract deferred revenue cost center"
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Deferred Revenue CC"
+  POSITION 165
+  MAX-WIDTH 30
+  ORDER 1640
+  MANDATORY
+
+ADD FIELD "so_manual_fr_terms" OF "so_mstr" AS logical 
+  DESCRIPTION "Indicates whether Freight Terms has been manually updated."
+  FORMAT "yes/no"
+  INITIAL "no"
+  LABEL "Manual Fr Terms"
+  POSITION 166
+  MAX-WIDTH 1
+  ORDER 1650
+  MANDATORY
+
+ADD FIELD "so_domain" OF "so_mstr" AS character 
+  DESCRIPTION "The business domain for this data."
+  FORMAT "x(8)"
+  INITIAL ""
+  LABEL "Domain"
+  POSITION 167
+  MAX-WIDTH 16
+  ORDER 1660
+  MANDATORY
+
+ADD FIELD "oid_so_mstr" OF "so_mstr" AS decimal 
+  DESCRIPTION "Unique application generated record identifier."
+  FORMAT ">>>>>>>>>>>>>>>>>>>>>>>>>>>9.9<<<<<<<<<"
+  INITIAL "0"
+  POSITION 168
+  MAX-WIDTH 38
+  DECIMALS 10
+  ORDER 1670
+  MANDATORY
+
+ADD FIELD "so_req_time" OF "so_mstr" AS character 
+  DESCRIPTION "The required time for the order."
+  FORMAT "99:99"
+  INITIAL ""
+  LABEL "Required Time"
+  POSITION 169
+  MAX-WIDTH 30
+  VALEXP "{fstime.v so_req_time}"
+  VALMSG "ERROR: TIME MUST BE HH:MM FORMAT. Please re-enter."
+  VALMSG-SA "200"
+  ORDER 1680
+  MANDATORY
+
+ADD INDEX "so_nbr" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+
+ADD INDEX "so_bill" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_bill" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+  INDEX-FIELD "so_ord_date" ASCENDING 
+
+ADD INDEX "so_ca_nbr" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_ca_nbr" ASCENDING 
+
+ADD INDEX "so_cust" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_cust" ASCENDING 
+
+ADD INDEX "so_cust_po" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_cust_po" ASCENDING 
+  INDEX-FIELD "so_cust" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+
+ADD INDEX "so_fsm_type" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_fsm_type" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+
+ADD INDEX "so_invoice" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_inv_nbr" ASCENDING 
+
+ADD INDEX "so_po_nbr" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_po" ASCENDING 
+  INDEX-FIELD "so_cust" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+
+ADD INDEX "so_quote" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_quote" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+
+ADD INDEX "so_to_inv" ON "so_mstr" 
+  AREA "TRANSACTION_IDX"
+  UNIQUE
+  INDEX-FIELD "so_domain" ASCENDING 
+  INDEX-FIELD "so_to_inv" ASCENDING 
+  INDEX-FIELD "so_nbr" ASCENDING 
+
+.
+PSC
+cpstream=1257
+.
+0000042507
