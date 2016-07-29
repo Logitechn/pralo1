@@ -65,7 +65,8 @@
 /* Revision: 1.37.1.5  BY: Evan Todd           DATE: 02/19/09   ECO: *Q2D3*   */
 /* Revision: 1.37.1.6  BY: Evan Todd           DATE: 09/03/09   ECO: *Q3BT*   */
 /* Revision: 1.37.1.8  BY: Prajakta Patil      DATE: 10/16/09   ECO: *Q3J5*   */
-/* $Revision: 1.37.1.10 $  BY: Laxmikant Bondre    DATE: 11/10/09   ECO: *Q3LS*   */
+/* Revision: 1.37.1.10   BY: Laxmikant Bondre    DATE: 11/10/09   ECO: *Q3LS*   */
+/* $Revision: 1.38 $  BY: Aurimas Blazys    DATE: 2016/07/07   ECO: *YF10*   */
 /*-Revision end---------------------------------------------------------------*/
 
 /*                                                                            */
@@ -280,7 +281,8 @@ if c-application-mode <> "API" then do:
          display
             1           @ cmt_seq
             global_ref  @ cd_ref
-            global_type @ cd_type
+/*YF10*			global_type @ cd_type *YF10*/
+/*YF10*/            "SO" @ cd_type
             global_lang @ cd_lang.
 
          /* READ MASTER COMMENT RECORD FOR GLOBAL SETTINGS */
@@ -324,7 +326,7 @@ if c-application-mode <> "API" then do:
                then do:
                   display
                      cmt_ref     @ cd_ref
-                     cmt_type    @ cd_type
+                     /*YF10*  cmt_type    @ cd_type  *YF10*/
                      cmt_lang    @ cd_lang
                      cmt_seq + 1 @ cmt_seq
                      cmt_cmmt.
@@ -387,7 +389,7 @@ if c-application-mode <> "API" then do:
          /* MESSAGE #1 - ADDING NEW RECORD */
          {pxmsg.i &MSGNUM=1 &ERRORLEVEL={&INFORMATION-RESULT}}
 
-         if can-find (first cd_det using  cd_ref and cd_type and cd_lang
+         if can-find (first cd_det using  cd_ref /*and cd_type*/ and cd_lang
          where cd_det.cd_domain = global_domain )
          then do:
 
@@ -409,7 +411,7 @@ if c-application-mode <> "API" then do:
          else do:
 
             for first cd_det
-               fields(cd_domain cd_cmmt cd_lang cd_ref cd_seq cd_type)
+               fields(cd_domain cd_cmmt cd_lang cd_ref cd_seq /*YF10 cd_type *YF10*/)
                where cd_domain = global_domain
                and   cd_ref    = global_ref
                and   cd_type   = (if input cd_type <> ""
@@ -434,7 +436,7 @@ if c-application-mode <> "API" then do:
          prevField = "cd_ref".
          prompt-for
             cd_ref
-            cd_type
+            /*YF10 cd_type *YF10*/
             cd_lang
             cd_seq
             editing:

@@ -1,4 +1,4 @@
-/* sosotrle.p - DISPLAY INVOICE TRAILER                                       */
+/* l4sotrle.p [sosotrle.p] - DISPLAY INVOICE TRAILER                          */
 /* Copyright 1986 QAD Inc. All rights reserved.                              */
 /* REVISION: 8.5      CREATED:       08/05/96   BY: jpm *J13Q*                */
 /* REVISION: 8.6      CREATED:       11/25/96   BY: jzw *K01X*                */
@@ -51,7 +51,9 @@
 /* Revision: 1.46.2.13      BY: Prabu M         DATE: 03/12/10  ECO: *Q3X5*   */
 /* Revision: 1.46.2.14      BY: Anurag Sharma   DATE: 06/22/10  ECO: *Q45J*   */
 /* Revision: 1.46.2.16     BY: Jean Miller     DATE: 07/26/10  ECO: *Q48Z*   */
-/* $Revision: 1.46.2.17 $ BY: Tushar Shetty        DATE: 11/28/11   ECO: *Q54D*  */
+/* Revision: 1.46.2.17  BY: Tushar Shetty        DATE: 11/28/11   ECO: *Q54D*  */
+/* $Revision: 1.50 $ BY: Aurimas Blazys        DATE: 2016/07/07   ECO: *YF10*  */
+
 /*-Revision end---------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -75,12 +77,21 @@
 
 /*V8:ConvertMode=Maintenance                                                 */
 
+/*YF10*/  define input parameter         p__sft01     as logical.
+/*YF10*/  define input parameter         p__sft02     as logical.
+/*YF10*/  define input parameter         p__csb     as logical.
+
+/*YF10*/   define variable n_level as integer initial 1 no-undo.
+            define variable l__sft03 as logical initial no no-undo.
+
 {mfdeclre.i}
 {cxcustom.i "SOSOTRLE.P"}
 {gplabel.i} /* EXTERNAL LABEL INCLUDE */
 {pxpgmmgr.i} /* Project X persistent procedure functions */
 
 {sotxidef.i}
+
+/*YF10*/  define variable ar_p_nm_vers  as character  initial "l4sotrle.p YF10" no-undo.
 
 /* NEW SHARED VARIABLES, BUFFERS AND FRAMES */
 define new shared variable undo_txdetrp     like mfc_logical.
@@ -163,6 +174,13 @@ define variable l_is_depot      as   logical                    no-undo.
 /* TAX INCLUDED                                                           */
 define variable l_linetot_tax_in      like sod_price no-undo.
 
+/*YF10*/  define variable r__amt  as  decimal  no-undo.
+/*YF10*/  define variable prc_frlm  as  integer  no-undo.
+
+define variable date         as date.
+define variable timer         as character.
+define variable print_list   like mfc_logical no-undo.
+
 {gprunpdf.i "mcpl" "p"}
 
 {fsconst.i} /* FIELD SERVICE CONSTANTS */
@@ -227,7 +245,8 @@ with frame a side-labels width 80 attr-space.
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame a:handle).
 
-{sosomt01.i}  /* Define shared frame d */
+/*YF10*  {sosomt01.i}   *YF10*/  /* Define shared frame d */
+/*YF10*/{lysosomt01.i}  
 {socurvar.i}
 {txcurvar.i}
 {sototfrm.i}
@@ -486,10 +505,26 @@ do on endkey undo, leave:
       if available cm_mstr
       then do:
 
-         if cm_cr_limit < (cm_balance + base_amt)
+/*YF10 ----------------------------------------- begin added section -- */             
+         define variable other_amt as decimal /*YF10*/ initial 0  no-undo.
+         define variable other_list as character no-undo.
+
+/*YF10  /*YF10*/ if p__sft01 then do: */
+/*YF10* uzkomentuota 05.15
+/*YF10*/ if p__sft02 then do:
+           {gprun.i ""b3socr02.p"" "(input so_bill, 
+                                   input so_nbr,
+                                   output other_amt,
+                                   output other_list)"}
+/*YF10*/ end.
+*YF10*/
+/*YF10 ------------------------------------------- end added section -- */         
+
+         if cm_cr_limit < (cm_balance + base_amt
+/*YF10*/                              + other_amt )
             and so_fsm_type <> "FSM-RO"
             and so_fsm_type <> "RMA"
-         and not(ccOrder)
+            and not(ccOrder)
          then do:
             /* Sales Order placed on credit hold */
             assign
@@ -498,9 +533,23 @@ do on endkey undo, leave:
 
             display so_stat with frame d.
 
-            msg-arg = string((cm_balance + base_amt),balance_fmt).
+/*YF10  /*YF10*/    if p__sft01 then do:  */
+/*YF10*/    if p__sft02 then do:
+/*YF10*          msg-arg = string((cm_balance + base_amt),balance_fmt). */
+/*YF10 ----------------------------------------- begin added section -- */             
+              if other_list > "" and other_amt > 0 then
+                msg-arg = "+" + other_list 
+                   + string((cm_balance + base_amt + other_amt ),balance_fmt).
+              else 
+              msg-arg = string((cm_balance + base_amt
+                                         + other_amt),balance_fmt).
+/*YF10 ------------------------------------------- end added section -- */         
+/*YF10*/    end.
+/*YF10*/    else assign  msg-arg = string((cm_balance + base_amt),balance_fmt).
+
             /* Customer Balance plus this Order */
             {pxmsg.i &MSGNUM=616 &ERRORLEVEL=2 &MSGARG1=msg-arg}
+            
             msg-arg = string(cm_cr_limit,limit_fmt).
             /* Credit Limit */
             {pxmsg.i &MSGNUM=617 &ERRORLEVEL=1 &MSGARG1=msg-arg}
@@ -509,6 +558,51 @@ do on endkey undo, leave:
                      &MSGARG1=getTermLabel(""SALES_ORDER"",20)}
 
          end.
+/*YF10 ----------------------------------------- begin added section -- */         
+/*YF10         define variable overdue_invoices as character no-undo. */
+
+
+/*YF10*/ if not p__sft01 then do:
+            repeat while program-name(n_level) <> ?.
+              if index(program-name(n_level),"l4som__2",1) > 0 then assign l__sft03 = yes.
+              assign n_level = n_level + 1.
+            end.
+          end.
+
+
+/*YF10*/ if p__sft01 /*YF10*/  or  l__sft03  then do:
+
+/*YF10
+.           {gprun.i ""b3socr03.p"" "(input so_bill,  output overdue_invoices)"}
+.           if overdue_invoices > ""  and credit_hold = false   then do:
+*/
+/*YF10*/   if credit_hold = false  then do:
+/*YF10*/      {gprun.i ""l4socr03.p"" "(input so_bill,  output r__amt)"}
+/*YF10*/      if r__amt > 0 then do:
+                assign prc_frlm = 2.
+                find code_mstr where code_domain = global_domain  and code_fldname = "##CREDIT-CONTROL"
+                    and code_value = "proc_from_limit"  no-lock no-error.
+                if available(code_mstr) then  prc_frlm = integer(code_cmmt).
+
+/*
+  message "r__amt=" + trim(string(r__amt,"->>>>>>9.9<<<")) + "  cm_cr_limit=" +  trim(string(cm_cr_limit,"->>>>>>9.9<<<"))
+ + "  prc_frlm=" +  trim(string(prc_frlm,"->>>>>>9.9<<<"))
+ + ".".   pause.
+*/
+                if r__amt > (cm_cr_limit * prc_frlm / 100) then do:
+
+                  /* Sales Order placed on credit hold */
+                  assign
+                     credit_hold = true
+                     so_stat     = "HD".
+                  display so_stat with frame d.
+                  /* Sales Order placed on credit hold */
+                  {pxmsg.i &MSGNUM=690 &ERRORLEVEL=1   &MSGARG1=getTermLabel(""SALES_ORDER"",20)}          
+                end.
+              end.
+           end.                                                                               
+/*YF10 ------------------------------------------- end added section -- */         
+/*YF10*/ end.
 
          if cm_cr_limit < (cm_balance + base_amt) and
             so_fsm_type = "FSM-RO" and
@@ -1276,10 +1370,8 @@ Notes:
       else tax_date = so_tax_date.
       if tax_date = ? then tax_date = so_ord_date.
 
-      l_ord_contains_tax_in_lines = can-find (first sod_det
-                                                  where sod_domain =                                                       global_domain                                                               and  sod_nbr = so_nbr
-                                                   and   sod_taxable
-                                                   and   sod_tax_in).
+      l_ord_contains_tax_in_lines = can-find (first sod_det  where sod_domain = global_domain
+               and  sod_nbr = so_nbr  and  sod_taxable  and  sod_tax_in).
 
       /* ACCUMULATE LINE AMOUNTS */
       for each sod_det

@@ -13,7 +13,8 @@
 /* REVISION: 9.1      LAST MODIFIED: 08/12/00   BY: *N0KN* Mark Brown         */
 /* Old ECO marker removed, but no ECO header exists *F0PN*                    */
 /* Revision: 1.12.1.2   BY: Jean Miller          DATE: 05/26/02  ECO: *P076*  */
-/* $Revision: 1.12.1.3 $ BY: Ed van de Gevel Date: 02/07/12 ECO: *Q579* */
+/* Revision: 1.12.1.3  BY: Ed van de Gevel Date: 02/07/12 ECO: *Q579* */
+/* $Revision: 1.13 $ BY: Aurimas Blazys 	Date:2016/07/07 ECO: *YF10* */
 /******************************************************************************/
 /* All patch markers and commented out code have been removed from the source */
 /* code below. For all future modifications to this file, any code which is   */
@@ -26,6 +27,8 @@
 define variable print_ih like mfc_logical label "Print Inv Hist".
 define variable edi_ih   like mfc_logical label "EDI Inv Hist".
 define variable edi_ack  like mfc_logical label "EDI PO Ack".
+
+/*
 
 {&SOSOMT01-I-TAG1}
 form
@@ -48,5 +51,45 @@ form
    so_bol         colon 56
 with frame d side-labels width 80 attr-space.
 {&SOSOMT01-I-TAG2}
+
+*/
+
+define variable l_no_cig_cup as logical no-undo.
+
+form
+   so_cr_init     colon 15
+   so_print_so    colon 39
+   so_ar_acct     colon 52  label "AR Acct"
+   so_ar_sub      no-label
+   so_ar_cc       no-label
+   so_cr_card     colon 15
+   so_print_pl    colon 39
+   so_prepaid     colon 56
+   so_stat        colon 15
+   print_ih       colon 39
+   so_fob         colon 56
+   so_rev         colon 15
+   edi_ih         colon 39
+   so_shipvia     colon 56
+   edi_ack        colon 15
+   so_partial     colon 39
+   so_bol         colon 56
+/*YF10*/   date          colon 15  label "Date" 
+/*YF10*/   timer          colon 39  label "Time" 
+/*YF10*/   print_list     colon 70 label "kainorastis"
+with frame d side-labels width 80 attr-space.
+
+form
+   so__qadc02 colon 15 format "x(27)" label "Bank Account"
+   so__qadc05 colon 56 format "x(2)"  label "Bank"
+with overlay frame cigcup1 side-labels width 80.
+
+
+find mfc_ctrl where mfc_domain = global_domain and mfc_field = "l_use_cig_cup"
+no-lock no-error.
+l_no_cig_cup = (available mfc_ctrl = no or mfc_logical = no).
+
+
+
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame d:handle).

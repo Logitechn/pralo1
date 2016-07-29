@@ -97,7 +97,8 @@
 /* Revision: 1.61.1.19   BY: Ed van de Gevel      Date: 02/07/12  ECO: *Q579* */
 /* Revision: 1.61.1.20   BY: Nirmala Joshi        DATE: 04/03/12  ECO: *Q59M* */
 /* Revision: 1.61.1.21   BY: Piergiorgio Squecco  DATE: 10/02/12 ECO: *Q5K9* */
-/* $Revision: 1.61.1.22 $ BY: Ed van de Gevel DATE: 01/08/13 ECO: *Q5PK* */
+/* Revision: 1.61.1.22  BY: Ed van de Gevel DATE: 01/08/13 ECO: *Q5PK* */
+/* $Revision: 1.62 $ BY: Aurimas Blazys 	DATE: 2016/07/07 ECO: *YF10* */
 /*-Revision end---------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -123,6 +124,9 @@
 
 define input parameter this-is-rma as logical.
 define input parameter consignment like mfc_logical no-undo.
+
+/*YF10*/  define input parameter         p__sft01     as logical.
+/*YF10*/  define input parameter         p__csb     as logical.
 
 define new shared variable old_slspsn    like so_slspsn   no-undo.
 define new shared variable old_ft_type   like ft_type.
@@ -163,6 +167,7 @@ define shared variable freight_ok    like mfc_logical.
 define shared variable calc_fr       like mfc_logical
    label "Calculate Freight".
 define shared variable l_up_sales    like mfc_logical no-undo.
+
 
 /* WHERE A SALES ORDER LINE HAS BEEN CONFIGURED WITH CONCINITY WE*/
 /* WANT TO DELETE THE ASSOCIATED FILE HELD IN SOD__QADC01.*/
@@ -319,11 +324,11 @@ do on error undo, retry with frame b:
       so_rmks
       line_pricing when (new_order)
       so_pr_list
-      so_site
+      so_site    when (inv_org = "")
       so_channel
       so_project
       confirm when (new so_mstr)
-      so_curr when (new so_mstr)
+      so_curr when (new so_mstr and inv_org = "")
       so_lang so_taxable
       so_taxc
       so_tax_date
@@ -546,6 +551,8 @@ do on error undo, retry with frame b:
    /* DELETE */
    if lastkey = keycode("F5") or lastkey = keycode("CTRL-D")
    then do:
+   
+	/*YF10*/        {b3souval.i}
 
       /* THE USER MAY HAVE LINKED RTS LINE(S) TO ONE OR MORE LINES */
       /* ON THIS RMA.  CHECK FOR THAT, AND, IF IT EXISTS, GIVE THE */
@@ -665,7 +672,9 @@ do on error undo, retry with frame b:
              soOID = oid_{&QXO-TABLE}.
 
       {&SOSOMTP-P-TAG7}
-      {gprun.i ""sosomtd.p""}
+	  
+/*YF10                {gprun.i ""sosomtd.p""} */
+/*YF10*/        {gprun.i ""lysosomtd.p""}
       if merror then undo setb, retry.
 
       else do:

@@ -143,7 +143,8 @@
 /* REVISION: 9.1      LAST MODIFIED: 12/14/99   BY: *N05D* Steve Nugent      */
 /* REVISION: 9.1      LAST MODIFIED: 08/12/00   BY: *N0KN* myb               */
 /* Old ECO marker removed, but no ECO header exists *F0PN*                   */
-/* $Revision: 1.13 $    BY: Katie Hilbert  DATE: 04/01/01 ECO: *P002*  */
+/* Revision: 1.13     BY: Katie Hilbert  DATE: 04/01/01 ECO: *P002*  */
+/* $Revision: 1.15 $    BY: Aurimas Blazys  DATE: 2016/07/07 ECO: *YF10*  */
 /******************************************************************************/
 /* All patch markers and commented out code have been removed from the source */
 /* code below. For all future modifications to this file, any code which is   */
@@ -173,5 +174,11 @@ pause 0.
 /* THE INPUT PARAMETER TO SOSOMT1.P, NO, MEANS, "NO, THIS IS    */
 /* NOT AN RMA" TO THAT PROGRAM.                                 */
 
+/*YF10*
 {gprun.i  ""sosomt1.p""
    "(input no)"}
+*YF10*/
+
+{gprun.i  ""lysosomt1.p""
+   "(input no, input yes, input no, input yes, input no,
+                                    input no, input no, input yes, input no, input no)"}

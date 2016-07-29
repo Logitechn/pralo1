@@ -54,7 +54,8 @@
 /* Revision: 1.48.1.1  BY: Alok Gupta            DATE: 08/04/05  ECO: *P3WS*  */
 /* Revision: 1.48.1.2  BY: Shivaraman V.         DATE: 04/11/06  ECO: *P4P5*  */
 /* Revision: 1.48.1.5     BY: Mochesh Chandran   DATE: 07/09/07  ECO: *P61L*  */
-/* $Revision: 1.48.1.6 $    BY: Gerard Menezes   DATE: 11/13/09  ECO: *Q3M1*  */
+/* Revision: 1.48.1.6     BY: Gerard Menezes   DATE: 11/13/09  ECO: *Q3M1*  */
+/* $Revision: 1.50 $    BY: Aurimas Blazys   DATE: 2016/07/07  ECO: *YF10*  */
 
 /*-Revision end---------------------------------------------------------------*/
 
@@ -74,6 +75,10 @@ define input parameter this-is-rma     as  logical.
 
 define input parameter rma-recno       as  recid.
 define input parameter new-rma         as  logical.
+
+/*YF10*/  define input parameter         p__sft01     as logical.
+/*YF10*/  define input parameter         p__csb     as logical.
+
 define output parameter l_edittax      like mfc_logical initial no no-undo.
 
 define new shared variable ad_recno        as recid.
@@ -388,7 +393,8 @@ do transaction:
       end.
 
       for first bill_cm
-         fields( cm_domain cm_addr cm_bill cm_curr cm_lang cm_pst_id)
+         fields( cm_domain cm_addr cm_bill cm_curr cm_lang cm_pst_id
+/*YF10*/         cm_cr_hold )
           where bill_cm.cm_domain = global_domain and  bill_cm.cm_addr = input
           so_bill no-lock:
       end. /* FOR FIRST BILL_CM */
@@ -408,6 +414,16 @@ do transaction:
          {pxmsg.i &MSGNUM=2018 &ERRORLEVEL=2}
          if this-is-rma and not batchrun then pause.
       end.  /* do on error... */
+	  
+	  /*YF10*/ if p__sft01 then do:
+/*YF10 ----------------------------------------- begin added section -- */      
+      if bill_cm.cm_cr_hold then do:
+         /* Customer on credit hold */
+         {pxmsg.i &MSGNUM=614 &ERRORLEVEL=3}
+         undo, retry.
+      end.  
+/*YF10 ----------------------------------------- begin added section -- */
+/*YF10*/ end.
 
       assign
          so_bill = input so_bill.

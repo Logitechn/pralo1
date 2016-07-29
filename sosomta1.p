@@ -79,7 +79,8 @@
 /* Revision: 1.71.1.18   BY: Prabu M              DATE: 07/15/09  ECO: *Q352* */
 /* Revision: 1.71.1.20   BY: Prajakta Patil       DATE: 10/23/09  ECO: *Q3J5* */
 /* Revision: 1.71.1.21    BY: Rinku Keswani       DATE: 05/20/10  ECO: *Q42V* */
-/* $Revision: 1.71.1.22 $   BY: Muthaiya D       DATE: 12/03/10  ECO: *Q4J5* */
+/* Revision: 1.71.1.22    BY: Muthaiya D       DATE: 12/03/10  ECO: *Q4J5* */
+/* $Revision: 1.72 $   BY: Aurimas Blazys       DATE: 2016/07/07  ECO: *YF10* */
 /*-Revision end---------------------------------------------------------------*/
 /******************************************************************************/
 /* All patch markers and commented out code have been removed from the source */
@@ -112,8 +113,22 @@
 
 /* Input/Output Parameters */
 define input  parameter this-is-rma as logical.
+/*YF10*/  define input parameter         p__sft01     as logical.
+/*YF10*/  define input parameter         p__csb1     as logical.
+/*YF10*/  define input parameter         p__csb2     as logical.
+/*YF10*/  define input parameter         p__csb3     as logical.
+/*YF10*/  define input parameter         p__i03      as integer.
+/*YF10*/  define input parameter         p__csb4     as logical.
 define output parameter not_okay    as integer no-undo.
 define output parameter rma-recno   as recid.
+
+/*YF10*/  define variable h-pw-window   as widget-handle no-undo.
+/*YF10*/  define  variable l_yn01    as logical format "T/N" initial "N" NO-UNDO.
+          
+/*YF10*/  define variable c_mes01  as character  initial "Užsakymo perdavimas į CSB nepažymėtas..."  no-undo.
+/*YF10*/  define variable c_mes02  as character  initial "Užsakymas perduotas į CSB.  Atšaukti? (T/N):"  no-undo.
+/*YF10*/  define variable c_mes03  as character  initial "Atšaukiau..."  no-undo.
+/*YF10*/  define variable n_i03    as integer    initial 0  no-undo.
 
 /* Shared Variables */
 define new shared variable l_edittax  like mfc_logical
@@ -139,7 +154,7 @@ define shared variable cm_recno      as recid.
 define shared variable comp          like ps_comp.
 define shared variable cmtindx       like cmt_indx.
 define shared variable sonbr         like so_nbr.
-define shared variable socmmts       like soc_hcmmts label "Comments".
+define shared variable socmmts       like soc_hcmmts initial yes label "Comments".
 define shared variable prev_abnormal like sod_abnormal.
 define shared variable promise_date  as date label "Promise Date".
 define shared variable perform_date  as date label "Perform Date".
@@ -184,6 +199,7 @@ define variable call-number     like rma_ca_nbr initial " ".
 define variable local-undo      as   integer no-undo.
 define variable l_old_shipto    like so_ship no-undo.
 define variable counter         as   integer no-undo.
+/*YF10*/define variable print_list   like mfc_logical initial no no-undo.
 
 define variable emt-bu-lvl      like global_part no-undo.
 define variable save_part       like global_part no-undo.
@@ -197,7 +213,6 @@ define variable l_vq_use_sold   like mfc_logical initial no no-undo.
 define variable l-hdl-req-date  as  handle.
 define variable l-hdl-due-date  as  handle.
 {&SOSOMTA1-P-TAG12}
-
 
 /* Buffers */
 define        buffer bill_cm       for cm_mstr.
@@ -217,6 +232,13 @@ define new shared frame b.
 {socnvars.i}
 define variable procedure_id as character no-undo.
 define variable ccOrder         as logical                      no-undo.
+
+/*YF10*/ if not p__csb4   then
+/*YF10*/  if p__csb2  and  p__i03 = 0 then assign
+              c_mes01 = "Užsakymo perdavimas į CSB jau pažymėtas..."
+              c_mes02 = "Pažymėti užsakymo perdavimą į CSB? (T/N):"
+              c_mes03 = "Pažymėjau..."
+              n_i03 = 1.
 
 /* DETERMINE IF CUSTOMER CONSIGNMENT IS ACTIVE */
 {gprun.i ""gpmfc01.p""
@@ -448,6 +470,14 @@ end. /* PROMPT-FOR SO_NBR */
 do transaction on error undo, leave on endkey undo, return:
 
    if input so_nbr = "" then do:
+   
+   /*YF10 ------------------------------------------------------------------*/
+/*YF10*/      if not p__csb4   then
+               if p__csb2 then do:
+                 assign  not_okay = 1.
+                 return.
+               end.
+/*YF10 ------------------------------------------------------------------*/
 
       if this-is-rma then do:
          /* GET NEXT RMA NUMBER WITH PREFIX */
@@ -500,6 +530,14 @@ do transaction on error undo, retry:
    exclusive-lock no-error.
 
    if not available so_mstr then do:
+   
+/*YF10 ------------------------------------------------------------------*/
+/*YF10*/      if not p__csb4   then
+               if p__csb2 /*YF10 or p__csb3 */ then do:
+                 assign  not_okay = 1.
+                 return.
+               end.
+/*YF10 ------------------------------------------------------------------*/
 
       if this-is-rma and not available rmc_ctrl then
          for first rmc_ctrl
@@ -800,6 +838,71 @@ do transaction on error undo, retry:
       with frame b.
 
    end.    /* if this-is-rma and... */
+   
+   if p__csb4 then do:
+               if available so_mstr then do:
+                 if so__qadd03 = 1 then do:
+                   assign l_yn01 = ?.
+                   message  "Užsakymas pažymėtas perduoti į CSB.  Tęsti?"  skip
+                     update l_yn01.
+                   if not l_yn01 then do:
+                     for first so_mstr where recid(so_mstr) = recno  no-lock: end.
+                     assign  not_okay = 1.
+                     return.
+                   end.
+                 end.
+               end.
+             end.
+             else do:
+/*YF10 ------------------------------------------------------------------*/
+/*YF10 ------------------------------------------------------------------*/
+             if p__csb2 or p__csb3 then do:
+               recno = recid(so_mstr).
+               if p__csb2 then do:
+                 if available so_mstr then do:
+                   if so__qadd03 <> p__i03 then do:             /*YF10      if so__qadi03 <> 1 then do: */
+/*
+.                     message  c_mes01  skip                     /* "Užsakymo perdavimas į CSB nepažymėtas..." */
+.                            view-as alert-box question buttons ok
+.                            update l_yn01.
+*/
+                     message  c_mes01.  pause.
+
+                     for first so_mstr where recid(so_mstr) = recno  no-lock: end.
+                   end.
+                   else do:
+                     assign l_yn01 = ?.
+                     message  c_mes02  skip                    /* "Užsakymas perduotas į CSB.  Atšaukti?" */
+/*                       view-as alert-box question buttons yes-no-cancel */
+                       update l_yn01.       /*     in window h-pw-window. */
+                     if l_yn01 then do:
+                       assign so__qadd03 = n_i03.          /*YF10   assign so__qadi03 = 0. */
+                       for first so_mstr where recid(so_mstr) = recno  no-lock: end.
+                       message c_mes03.                /* "Atšaukiau..." */
+                       pause.
+                     end.
+                   end.
+                   for first so_mstr where recid(so_mstr) = recno  no-lock: end.
+                 end.
+                 assign  not_okay = 1.
+                 return.
+               end.
+               
+               if p__csb3 then do:
+                 if available so_mstr then do:
+                   if so__qadd03 = 1 then do:       /*YF10  if so__qadi03 = 1 */
+                     message "Užsakymas perduotas į CSB. Koreguoti negalima...".
+                     pause.
+                     for first so_mstr where recid(so_mstr) = recno  no-lock: end.
+                     assign  not_okay = 1.
+                     return.
+                   end.
+                 end.
+               end.
+
+             end.
+/*YF10 ------------------------------------------------------------------*/
+/*YF10*/     end.
 
    l_old_shipto = so_ship.
    {&SOSOMTA1-P-TAG19}
@@ -815,11 +918,13 @@ do transaction on error undo, retry:
 
    {&SOSOMTA1-P-TAG3}
 
-   {gprun.i ""sosomtcm.p""
-      "(input  this-is-rma,
-        input  recid(rma_mstr),
-        input  new_order,
-        output l_edittax)"}
+   /*YF10            {gprun.i ""sosomtcm.p""  */
+/*YF10*/     {gprun.i ""lysosomtcm.p""
+               "(input  this-is-rma,
+                 input  recid(rma_mstr),
+                 input  new_order,
+/*YF10*/         input p__sft01, input p__csb1,
+                 output l_edittax)"}
 
    if undo_cust then do:
       local-undo = 3.
@@ -1398,9 +1503,11 @@ do transaction on error undo, retry:
 
       undo_flag = true.
 
-      {gprun.i ""sosomtp.p""
-               "(input this-is-rma,
-                 input using_cust_consignment)"}
+/*YF10                {gprun.i ""sosomtp.p""  */
+/*YF10*/        {gprun.i ""lysosomtp.p""
+                   "(input this-is-rma,
+                     input using_cust_consignment
+/*YF10*/             ,input p__sft01, input p__csb1 )"}
 
       /* IF UNDO_FLAG THEN NEXT MAINLOOP (IN SOSOMT.P). */
       /* JUMP OUT IF S.O. WAS (SUCCESSFULLY) DELETED */
@@ -1499,7 +1606,7 @@ do transaction on error undo, retry:
       {fsmnp02.i ""fsrmamt.p"" 10 """(input so_recno, input rma-recno)"""}
    end.
    else do:
-      {fsmnp02.i ""sosomt.p"" 10 """(input so_recno)"""}
+      {fsmnp02.i ""lysosomt.p"" 10 """(input so_recno)"""}
    end.
 
    /* If EMT, determine the Comment Type */
@@ -1511,13 +1618,16 @@ do transaction on error undo, retry:
       global_lang = so_mstr.so_lang
       global_type = "".
 
+	socmmts = yes.
+
    if socmmts = yes then do:
       assign
          cmtindx    = so_mstr.so_cmtindx
          global_ref = so_mstr.so_cust
          save_part  = global_part
          global_part = emt-bu-lvl.
-      {gprun.i ""gpcmmt01.p"" "(input ""so_mstr"")"}
+/*YF10{gprun.i ""gpcmmt01.p"" "(input ""so_mstr"")"}*/
+/*YF10*/    {gprun.i ""lygpcmmt01.p"" "(input ""so_mstr"")"}
       assign
          so_mstr.so_cmtindx = cmtindx
          global_part = save_part.

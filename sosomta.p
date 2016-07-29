@@ -160,7 +160,8 @@
 /* Revision: 1.105.1.29   BY: Imran Ansari        DATE: 01/05/11  ECO: *Q4KT* */
 /* Revision: 1.105.1.30   BY: Shivakumar Patil    DATE: 03/09/11  ECO: *Q4P4* */
 /* Revision: 1.105.1.31   BY: Rajalaxmi Ganji     DATE: 03/24/11  ECO: *Q4Q0* */
-/* $Revision: 1.105.1.32 $  BY: Akhil Puthussery    DATE: 02/19/13  ECO: *Q5RD* */
+/* Revision: 1.105.1.32   BY: Akhil Puthussery    DATE: 02/19/13  ECO: *Q5RD* */
+/* $Revision: 1.110    $  BY: Aurimas Blazys      DATE: 2016/07/07  ECO: *YF10* */
 /*-Revision end---------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -184,6 +185,11 @@ define input parameter this-is-rma      as  logical.
 define input parameter rma-recno        as  recid.
 define input parameter rma-issue-line   as  logical.
 
+/*YF10*/  define input parameter         p__sft01     as logical.
+/*YF10*/  define input parameter         p__sft01b    as logical.
+/*YF10*/  define input parameter         p__csb     as logical.
+/*YF10*/  define input parameter         p__part1_9   as logical.
+
 /* CONSIGNMENT VARIABLES */
 {socnvars.i}
 define variable proc_id as character no-undo.
@@ -191,7 +197,7 @@ define variable proc_id as character no-undo.
 define new shared variable pl                like pt_prod_line.
 define new shared variable undo_all          like mfc_logical  initial no.
 define new shared variable sod_recno         as   recid.
-define new shared variable sodcmmts          like soc_lcmmts   label "Comments".
+define new shared variable sodcmmts          like soc_lcmmts initial yes   label "Comments".
 define new shared variable prev_consume      like sod_consume.
 define new shared variable clines            as   integer.
 define new shared variable sod-detail-all    like soc_det_all.
@@ -318,6 +324,8 @@ define temp-table tt_field_recs
 
 define buffer sod_buff2 for sod_det.
 define buffer rmdbuff   for rmd_det.
+
+/*YF10*/  define variable c01  as character.
 
 {pxmaint.i}
 
@@ -913,6 +921,8 @@ repeat on endkey undo, leave:
                end.    /* if recno <> ? */
 
             end.    /* editing */
+			
+			{b3souval.i}
 
             /*
             * If the sales order was created by an application external to
@@ -1159,7 +1169,22 @@ repeat on endkey undo, leave:
 
          hide message no-pause.
 
-         assign sod_part.
+         /*YF10*/ assign sod_part.
+
+/*YF10*/ if p__part1_9 then do:
+           if sod_part entered then do:    /* not new so_mstr and so_ship entered */
+             if substring(trim(sod_part),1,1) <> "9" then do:
+/*YF10               {pxmsg.i &MSGTEXT='"NV kodo pirmas ženklas t.b. 9..."'  &ERRORLEVEL=1  &PAUSEAFTER=true } */
+/*YF10*/       c01 = "NV kodo pirmas ženklas t.b. 9 (" + sod_part + ")...".
+               {pxmsg.i &MSGTEXT=c01  &ERRORLEVEL=1  &PAUSEAFTER=true }
+               next-prompt sod_part.
+/*               clear frame ship_to. */
+               undo, retry.
+             end.
+           end.
+         end.
+
+/*YF10         assign sod_part. */
 
          l_part = sod_part.
 
@@ -1592,7 +1617,8 @@ repeat on endkey undo, leave:
 
          /* ADDED INPUT OF consign_flag AND using_cust_consignment */
          /* VARIABLE TO THE CALL TO sosomtla.p.                    */
-         {gprun.i ""sosomtla.p""
+ /*YF10         {gprun.i ""sosomtla.p"" */
+/*YF10*/ {gprun.i ""lysosomtla.p""
             "(input this-is-rma,
               input rma-recno,
               input rma-issue-line,
@@ -1878,6 +1904,29 @@ repeat on endkey undo, leave:
          next mainloop.
       end.
       run pl-comment.
+	  
+	  /*YF10*/
+      if p__sft01 then do:
+/*LP06 ------------------------------------------- end added section -- */
+        if not sngl_ln and available(pt_mstr) then do:
+              down with frame c.            
+              display
+                 substring(pt_desc1,  1, 18) @ sod_det.sod_part
+                 substring(pt_desc1, 19,  6) @ sod_det.sod_qty_ord
+                 substring(pt_desc2,  1, 14) format "x(14)" @ sod_det.sod_list_pr
+                 substring(pt_desc2, 15,  7) format "x(7)" @ discount
+                 substring(pt_desc2, 22,  3) @ sod_det.sod_price
+              with frame c.
+           end.      
+          
+        /* Display message with total amount & credit limit */
+/*YF10        {gprun.i ""b3socr01.p"" "(input so_nbr)"}  */
+/*YF10*/  {gprun.i ""l4socr01.p"" "(input so_nbr, input p__sft01b)"} 
+/*LP06 ------------------------------------------- end added section -- */        
+
+
+/*YF10*/
+      end.
 
       if not sngl_ln then down 1 with frame c.
 
@@ -1916,6 +1965,8 @@ hide frame c.
 hide frame a.
 
 {&SOSOMTA-P-TAG40}
+
+end.
 
 PROCEDURE pl-comment:
 /* ------------------------------------------------------------------

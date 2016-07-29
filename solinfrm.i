@@ -35,7 +35,8 @@
 /* Old ECO marker removed, but no ECO header exists *J0N2*               */
 /* Revision: 1.10.2.6       BY: Russ Witt       DATE: 09/21/01   ECO: *P01H*  */
 /* Revision: 1.10.2.12      BY: Steve Nugent    DATE: 10/15/01   ECO: *P004*  */
-/* $Revision: 1.10.2.14 $            BY: Priya Idnani    DATE: 11/24/04   ECO: *P2WH*  */
+/* Revision: 1.10.2.14             BY: Priya Idnani    DATE: 11/24/04   ECO: *P2WH*  */
+/* $Revision: 1.11 $            BY: Aurimas Blazys    DATE: 2016/07/07   ECO: *YF10*  */
 /******************************************************************************/
 /* All patch markers and commented out code have been removed from the source */
 /* code below. For all future modifications to this file, any code which is   */
@@ -186,6 +187,8 @@ with frame d side-labels /*V8-*/ 1 down /*V8+*/ width 80
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame d:handle).
 
+/*************YF10*************/
+
 form
    sod_pricing_dt colon 20
    /*V8! space(2) */
@@ -199,3 +202,6 @@ with frame line_pop overlay side-labels row 12 column 25.
 
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame line_pop:handle).
+
+/***************YF10********/
+

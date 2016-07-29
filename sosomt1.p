@@ -84,7 +84,8 @@
 /* Revision: 1.69.1.26    BY: Prajakta Patil      DATE: 06/12/09  ECO: *Q30C* */
 /* Revision: 1.69.1.27    BY: Prabu M             DATE: 09/16/09  ECO: *Q39L* */
 /* Revision: 1.69.1.28    BY: Robert Jensen       DATE: 10/05/09  ECO: *Q3GV* */
-/* $Revision: 1.69.1.29 $ BY: Katie Hilbert       DATE: 10/05/09  ECO: *Q3RL* */
+/* Revision: 1.69.1.29   BY: Katie Hilbert        DATE: 10/05/09  ECO: *Q3RL* */
+/* $Revision: 1.80 $       BY: Aurimas Blazys      DATE: 2016/07/07  ECO: *YF10* */
 /*-Revision end---------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -108,6 +109,20 @@
 {apconsdf.i}   /* PRE-PROCESSOR CONSTANTS FOR LOGISTICS ACCOUNTING */
 
 define input parameter         this-is-rma     as logical.
+/*YF10*/  define input parameter         p__sft01     as logical.
+/*YF10*/  define input parameter         p__sft02     as logical.
+/*YF10*/  define input parameter         p__csb     as logical.
+/*YF10*/  define input parameter         p__csb2     as logical.   /* "Užsakymas perduotas į CSB. Atšaukti" */
+/*YF10*/  define input parameter         p__csb4     as logical.
+/*YF10*/  define input parameter         p__qxt     as logical.
+/*YF10*/  define input parameter         p__h15     as logical.
+/*YF10*/  define input parameter         p__nconf     as logical.
+/*YF10*/  define input parameter         p__part1_9   as logical.
+
+/*YF10*/  define variable ar_p_nm_vers  as character  initial "l4somt1e.p Y713" no-undo.
+/*YF10*/  define variable l_csb3       as logical initial yes no-undo. /* "Užsakymas perduotas į CSB. Koreguoti negalima..." */
+/*YF10*/  define variable n_i03        as integer initial 0 no-undo.
+/*YF10*/  define variable l__sft01b    as logical initial yes no-undo. /* for each so_mstr where   so_nbr <> ip-nbr */
 
 define new shared variable line          like sod_line.
 define new shared variable del-yn        like mfc_logical.
@@ -186,6 +201,10 @@ define variable batch_id        as character.
 define variable use-log-acctg   as logical no-undo.
 define variable allaccepted     like mfc_logical no-undo.
 
+/*YF10*/define variable date         as date.
+/*YF10*/define variable timer         as character.
+/*YF10*/define variable print_list   like mfc_logical initial no.
+
 /* RMA-SPECIFIC VARIABLES */
 define variable rma-recno       as recid.
 
@@ -229,7 +248,12 @@ define new shared temp-table l_fr_table
 {etrpvar.i &new="new"}
 
 {etsotrla.i "NEW"}
+
+/*YF10*
 {sosomt01.i}
+*YF10*/
+
+/*YF10*/{lysosomt01.i}
 
 {gpcrfmt.i}
 
@@ -272,6 +296,10 @@ run gpcrfmt
 
 /* CHECK IF LOGISTICS ACCOUNTING IS ENABLED */
 {gprun.i ""lactrl.p"" "(output use-log-acctg)"}
+
+/*YF10*/  find code_mstr where code_domain = global_domain  and code_fldname = "##CREDIT-CONTROL"
+             and code_value = "overdue"  no-lock no-error.
+          if available(code_mstr) then  if trim(code_cmmt) = "N" then assign l__sft01b = no.
 
 do transaction on error undo, retry:       /* TRANSACTION 10 */
 
@@ -411,8 +439,12 @@ do:
          /* IS LOCKED FOR THE DURATION OF SO HEADER PROCESSING  */
 
          /* PROCESS SALES ORDER HEADER FRAMES */
-         {gprun.i ""sosomta1.p""
+/*YF10*  {gprun.i ""sosomta1.p""  *YF10*/
+ /*YF10*/ {gprun.i ""lysosomta1.p""
             "(input this-is-rma,
+/*YF10*/      input p__sft01, input p__csb, input p__csb2, input l_csb3,
+/*YF10*/      input n_i03,
+/*YF10*/      input p__csb4,
               output return_int,
               output rma-recno)"}
 
@@ -477,16 +509,18 @@ do:
             {gpcontxt.i
                &STACKFRAG = 'sosomta,sosomt1,fsrmamt'
                &FRAME = 'c' &CONTEXT = 'ISS'}
-
-            {gprun.i ""sosomta.p""
+/*YF10*  {gprun.i ""sosomta.p""  *YF10*/
+/*YF10*/     {gprun.i ""lysosomta.p""
                "(input this-is-rma,
                  input rma-recno,
-                 input yes)"}
+                 input yes
+/*YF10*/         , input p__sft01, /*YF10*/ input l__sft01b, input p__csb, /*YF10*/ input p__part1_9)"}
 
             /* Clear context for QXtend */
             {gpcontxt.i
                &STACKFRAG = 'sosomta,sosomt1,fsrmamt'
                &FRAME = 'c'}
+/*YF10               &STACKFRAG = 'sosomta,sosomt1,fsrmamt'  */
 
             if this-is-rma then do:
 
@@ -681,8 +715,10 @@ do:
          cm_recno = recid(bill_cm).
 
          /* Maintain Trailer Section */
-         {gprun.i ""sosomtc.p"" "(input this-is-rma)"}
-
+/*YF10*  {gprun.i ""sosomtc.p"" "(input this-is-rma)"} *YF10*/
+/*YF10*/        {gprun.i ""lysosomtc.p"" "(input this-is-rma ,input p__sft01, input p__sft02, input p__csb
+                        , input p__qxt, input p__h15 )"}
+	
          /* CHECK FOR A CHANGE TO THE CREDIT STATUS */
          if soc_use_btb
             and so_primary
@@ -880,12 +916,15 @@ do:
          end.
 
          /* RECORD QXTEND OUTBOUND EVENT. */
-         {qxotrign.i
-            &EVENT-NAME = 'SalesOrderMaintenance'
-            &TABLE-NAME = 'so_mstr'
-            &ROW-ID = string(rowid(so_mstr))
-            &OID = string(so_mstr.oid_so_mstr)
-            &TRIGGER-TYPE = 'WRITE'}.
+/*YF10
+.         {qxotrign.i
+.            &EVENT-NAME = 'SalesOrderMaintenance'
+.            &TABLE-NAME = 'so_mstr'
+.            &ROW-ID = string(rowid(so_mstr))
+.            &OID = string(so_mstr.oid_so_mstr)
+.            &TRIGGER-TYPE = 'WRITE'}.
+*/
+/*YF10*/ {gprun.i ""lysomddp.p"" "(input rowid(so_mstr))"}
 
       end. /* mainloop */
 

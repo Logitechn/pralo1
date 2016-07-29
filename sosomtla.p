@@ -270,7 +270,8 @@
 /* Revision: 1.167.1.55  BY: Keny Fernandes      DATE: 08/12/11  ECO: *Q4ZQ* */
 /* Revision: 1.167.1.56  BY: Nirmala Joshi       DATE: 04/03/12  ECO: *Q59M* */
 /* Revision: 1.167.1.57  BY: Akhil Puthussery    DATE: 02/26/13  ECO: *Q5RS* */
-/* $Revision: 1.167.1.58 $  BY: Pankaj Burbure   DATE: 03/08/13  ECO: *Q5SD*  */
+/* Revision: 1.167.1.58   BY: Pankaj Burbure   DATE: 03/08/13  ECO: *Q5SD*  */
+/* $Revision: 1.200 $  BY: Aurimas Blazys       DATE: 2016/07/07  ECO: *YF10*  */
 /*-Revision end---------------------------------------------------------------*/
 /******************************************************************************/
 /* All patch markers and commented out code have been removed from the source */
@@ -421,7 +422,7 @@ define shared variable prev_qty_ord like sod_qty_ord.
 define shared variable all_days as integer.
 define shared variable so_recno as recid.
 define shared variable sod_recno as recid.
-define shared variable sodcmmts like soc_lcmmts label "Comments".
+define shared variable sodcmmts like soc_lcmmts initial yes label "Comments".
 define shared variable prev_abnormal like sod_abnormal.
 define shared variable prev_consume like sod_consume.
 define shared variable consume like sod_consume.
@@ -485,6 +486,15 @@ define variable undo_all5       like mfc_logical no-undo.
 define variable reason-comment  like mfc_logical no-undo.
 define variable tr-cmtindx      like tr_fldchg_cmtindx  no-undo.
 define variable reason-code     like rsn_code no-undo.
+
+
+/*YF10*/define variable muscle 			as character format "x(4)" no-undo.
+/*YF10*/define variable fat 			as character format "x(4)" no-undo.
+/*YF10*/define variable weight 			as character format "x(4)" no-undo.
+/*YF10*/define variable age 			as character format "x(4)" no-undo.
+/*YF10*/define variable ph 			    as character format "x(4)"no-undo.
+/*YF10*/define variable packing		    as character format "x(4)" no-undo.
+/*YF10*/define variable comment		    as character format "x(40)" no-undo.
 
 define variable qty_allocatable  like in_qty_avail label "Qty Allocatable".
 define variable last_sod_price   like sod_price.
@@ -591,10 +601,20 @@ setFrameLabels(frame bom:handle).
 
 {mfdatev.i}
 
+/*YF10*/  {sopiwiq1.i new } 
+/*YF10*/  {l5piwi_0.i}
+/*YF10*/  define  variable l_um_vn as logical  initial yes no-undo.
+/*YF10*/  define variable c01 AS CHARACTER initial "".
+/*YF10*/ define variable c02 AS CHARACTER initial "".
+/*YF10*/  define variable c03 AS CHARACTER initial "".
+/*YF10*/  define variable l01 AS logical.
+/*YF10*/  define variable l02 AS logical.
+
 /*V8:HiddenDownFrame=c*/
 
 /*DEFINE FORMS*/
-{solinfrm.i}
+/*YF10* {solinfrm.i}  *YF10*/
+{lysolinfrm.i}
 
 {&SOSOMTLA-P-TAG33}
 form
@@ -619,8 +639,59 @@ with frame btb_data
 title color normal (getFrameTitle("ENTERPRISE_MATERIAL_TRANSFER_DATA",46))
 side-labels width 80 attr-space overlay row 10.
 
+/***************YF10*************/
+form
+   muscle colon  20       label "Raumeningumas"
+   /*V8! space(2) */
+   fat    colon 20		  label "Riebalingumas"
+   /*V8! space(2) */
+   weight    colon 20     label "Svorio kategorija"
+   /*V8! space(2) */
+   age    colon 20        label "Amzius"
+   /*V8! space(2) */
+   ph    colon 20         label "ph"
+   /*V8! space(2) */
+   packing    colon 20    label "Pakavimo"
+   /*V8! space(2) */
+   comment    colon 20    label "Komentarai"
+   /*V8! space(2) */
+with frame line_pop_second width 80 overlay side-labels row 12 column 25.
+
+/* SET EXTERNAL LABELS */
+setFrameLabels(frame line_pop_second:handle).
+
+/**********YF10***************/
+
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame btb_data:handle).
+
+/*YF10 jei QXT - gal vis tiek tikrinti 'VN' */
+          {gprun.i ""l5_dtqx1.p"" "(output c01,output l01,output l02)"}
+          if l02 then do:
+            assign l_um_vn = no.
+            if c01 <> "" then do:
+              find first code_mstr WHERE  code_mstr.code_domain = global_domain and  code_fldname = "##_AR_ENV_CONST_##"
+                and code_value = "C_PRG_NM_001" no-lock no-error.
+              if available code_mstr then do:
+/* YF10            assign m01 = index(code_cmmt,c01,1)  c03 = code_cmmt. */
+                if index(code_cmmt,c01,1) > 0 then  assign l_um_vn = yes.
+              end.
+            end.
+          end.
+
+/* YF10
+.          assign  c02 = string(year(today),"9999") + "." + string(month(today),"99") + "." + string(day(today),"99")
+.            + " " +  string(time,"HH:MM:SS")
+.            + ",  r__cRootExe=" + c01
+.            + ", r__lDotN=" + string(l01)
+.            + ", r__lQExt=" + string(l02)
+.            + ", m01=" + trim(string(m01))
+.            + ", l_um_vn=" + string(l_um_vn) + ",  c03=" + c03 + ".".
+.
+.          find first code_mstr WHERE  code_mstr.code_domain = global_domain and  code_fldname = "##_AR_ENV_CONST_##"
+.            and code_value = "E_001" exclusive-lock no-error.
+.          if available code_mstr then assign code_cmmt = c02.
+YF10 */
 
 assign
    undo_all3          = yes
@@ -1009,6 +1080,14 @@ do on error undo, leave:
                   sod_qty_ord when (not po-ack-wait)
                   sod_um      when (not po-ack-wait)
                go-on ("F5" "CTRL-D") with frame c.
+			   
+/*YF10*/			   
+			   if l_um_vn and not po-ack-wait and sod_um = "VN" and truncate(sod_qty_ord,0) <> sod_qty_ord then do:
+                 c01 = "Mato vnt. - " + sod_um + ", o kiekis - trupmena (" + trim(string(sod_qty_ord,"->>>>>>>9.9<<<")) + ")...".
+                 {pxmsg.i &MSGTEXT=c01  &ERRORLEVEL=4  &PAUSEAFTER=true}
+                 next-prompt sod_qty_ord with frame c.
+                 undo set1, retry.
+               end.
 
                if not new_line and
                   available pt_mstr and
@@ -1622,6 +1701,15 @@ do on error undo, leave:
                pt_recno = recid(pt_mstr)
                pcqty    = sod_qty_ord.
             {gprun.i ""sopccal.p""}
+			display
+				muscle
+				fat
+				weight
+				age
+				ph
+				packing
+				comment
+			with frame line_pop_second.
          end. /* IF so_crprlist <> "" AND AVAILABLE pt_mstr THEN DO: */
 
          /* LIST PRICE FOR RECEIPT WILL ALWAYS BE CREDIT PRICE */
@@ -2410,9 +2498,81 @@ do on error undo, leave:
             update
                sod_price
             with frame c.
+			
+/*********************************************YF10***********************/
 
+			find digidb.xxsod_det where xxsod_domain = global_domain and xxsod_part = so_nbr and xxsod__dec01 = line no-lock no-error.
+				if available xxsod_det then do with frame line_pop_second:
+					assign
+						muscle = xxsod_muscle
+						fat = xxsod_fat
+						weight = xxsod_net
+						age = xxsod_age
+						ph = xxsod_ph
+						packing = xxsod_cmt1
+						comment = xxsod_cmt2.
+				end.
+				else do with frame line_pop_second:
+					assign
+						muscle = ""
+						fat = ""
+						weight = ""
+						age = ""
+						ph = ""
+						packing = ""
+						comment = "".
+				end.	
+				
             {&SOSOMTLA-P-TAG17}
-
+			
+			update
+				muscle
+				fat    when (rma-issue-line)
+				weight    when (rma-issue-line)
+				age    when (rma-issue-line)
+				ph    when (rma-issue-line)
+				packing    when (rma-issue-line)
+				comment    when (rma-issue-line)
+			with frame line_pop_second.
+			
+			do:
+			  {mfquoter.i muscle        }
+			  {mfquoter.i fat       }
+			  {mfquoter.i weight       }
+			  {mfquoter.i age       }
+			  {mfquoter.i ph       }
+			  {mfquoter.i packing       }
+			  {mfquoter.i comment       }			  
+			end.
+			
+			find xxsod_det where xxsod_domain = global_domain and xxsod_part = so_nbr and xxsod__dec01 = line no-error.
+				if available xxsod_det then do:				
+					Assign
+						xxsod_muscle = muscle
+						xxsod_fat = fat
+						xxsod_net = weight
+						xxsod_age = age
+						xxsod_ph = ph
+						xxsod_cmt1 = packing
+						xxsod_cmt2 = comment.
+				end.
+				else do:
+					create xxsod_det. 
+					Assign
+						xxsod_domain = global_domain
+						xxsod_part = so_nbr
+						xxsod__dec01 = line
+						xxsod_muscle = muscle
+						xxsod_fat = fat
+						xxsod_net = weight
+						xxsod_age = age
+						xxsod_ph = ph
+						xxsod_cmt1 = packing
+						xxsod_cmt2 = comment.
+				end.
+				
+/*********************************************YF10***********************/
+					
          end. /* IF  (new_order OR reprice_dtl)... */
 
          /* DISALLOW PRICE CHANGE IF UNINVOICED SHIPMENT EXISTS */
@@ -2686,6 +2846,36 @@ do on error undo, leave:
 
       end. /* THEN DO: */
 
+	  if sngl_ln and (rma-issue-line or (not reprice and not new_order))
+      then do: 
+
+         if sod_sched then
+            pause 2.
+
+/********************************YF10***********************/
+			
+         {&SOSOMTLA-P-TAG35}
+         update
+            sod_pricing_dt when (rma-issue-line and soc_pc_line)
+            sod_crt_int    when (rma-issue-line and soc_pc_line)
+            reprice_dtl    when (not reprice_dtl and not new_order)
+            sod_pr_list    when (rma-issue-line)
+         with frame line_pop.
+         {&SOSOMTLA-P-TAG9}
+		 
+/********************************YF10***********************/
+
+         display
+            sod_pricing_dt
+            sod_crt_int
+         with frame d.
+
+
+         hide frame line_pop_second no-pause.
+         pause 0.
+
+      end. /* THEN DO: */
+	  
       /* FOR RMA'S, ALLOW USER TO OVERRIDE THE DEFAULT PRODUCT LINE */
       /* UP TO THE POINT IN TIME WHERE THEY'VE SHIPPED/INVOICED     */
       if this-is-rma and sngl_ln and sod_qty_ship = 0
@@ -2879,6 +3069,7 @@ do on error undo, leave:
       else if so_secondary
       then
          emt-bu-lvl = "SBU".
+		 
 
       /* LINE COMMENTS */
       if sodcmmts = yes then do:
@@ -2990,6 +3181,15 @@ do on error undo, leave:
    /* ASSIGN sod_cmtindx AFTER UPDATING INVENTORY DATABASE FILES */
    if sodcmmts = yes then
       sod_cmtindx = cmtindx.
+	  
+	  /*YF10*/
+/*YF10  so_ord_date -> so_pricing_dt  */
+/*YF10*/
+      assign sod__qadd03 = F_BestNetPr(so_ship, so_pricing_dt, so_site, so_curr, sod_part, """", sod_qty_ord, sod_um).
+      if sod__qadd03 = 0 then
+
+        assign sod__qadd03 = F_BestNetPr(so_cust, so_pricing_dt, so_site, so_curr, sod_part, """", sod_qty_ord, sod_um).
+
 
    undo_all = no.
 end. /*DO*/

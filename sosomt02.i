@@ -51,7 +51,7 @@
 /* ********** End Translatable Strings Definitions ********* */
 
 form
-   space(1)
+   space (1)
    so_nbr label {&sosomt02_i_2}
    so_cust so_bill so_ship
 with frame a side-labels width 80 attr-space.
@@ -59,7 +59,9 @@ with frame a side-labels width 80 attr-space.
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame a:handle).
 
-{&SOSOMT02-I-TAG1}
+/*YF10
+
+/*{&SOSOMT02-I-TAG1}*/
 form
    so_ord_date     colon 15
 
@@ -98,7 +100,68 @@ form
    so_userid       colon 68 label {&sosomt02_i_3}
 
 with frame b side-labels width 80 attr-space.
-{&SOSOMT02-I-TAG2}
+/*{&SOSOMT02-I-TAG2}*/
+
+YF10*/
+
+form
+   so_ord_date     colon 5
+   line_pricing    colon 28
+   confirm         colon 38 so_conf_date no-label
+
+   so_req_date     colon 15
+   so_pr_list      colon 38
+   so_curr         colon 58 so_lang
+
+   promise_date    colon 15
+   so_site         colon 38
+   /*V8-*/
+   so_taxable      colon 58 so_taxc no-label so_tax_date to 77 no-label
+   /*V8+*/
+   /*V8!
+   so_taxable      colon 58
+   view-as fill-in size 3.5 by 1
+   so_taxc no-label so_tax_date to 79 no-label */
+
+   so_due_date     colon 15
+   so_channel      colon 38
+   so_fix_pr       colon 68
+
+   perform_date    colon 15
+   so_project      colon 38
+   so_cr_terms     colon 68
+
+   so_pricing_dt   colon 15
+   so_userid       colon 38 label "Entered By"
+   inv_org         colon 58 label "Original Invoice" reprice
+
+   so_po           colon 15
+   socrt_int       colon 68
+
+   so_rmks         colon 15
+   /*reprice         colon 68*/
+
+   /*timer            colon */
+with frame b side-labels width 80 attr-space.
+
+form
+   so__qadc03      colon 15 label "CIG" format "x(10)"
+   so__qadc04      colon 58 label "CUP" format "x(15)"
+with overlay frame cigcup side-labels width 80.
+
+find mfc_ctrl where mfc_domain = global_domain and mfc_field = "l_use_cig_cup"
+no-lock no-error.
+l_no_cig_cup = (available mfc_ctrl = no or mfc_logical = no).
+
+form
+   inv_org       colon 19 label "Original Invoice"
+   org_nbr       colon 40 label "Org. Order"
+   cil_cor_rsn   colon 68 label "Correction Reason"  format "x(10)"
+with frame f_cor_inv overlay no-box
+   side-labels column 1 row 4 width 80 no-attr-space.
+
+/* SET EXTERNAL LABELS */
+setFrameLabels(frame f_cor_inv:handle).
 
 /* SET EXTERNAL LABELS */
 setFrameLabels(frame b:handle).

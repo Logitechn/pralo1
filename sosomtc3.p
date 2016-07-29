@@ -38,7 +38,8 @@
 /* Revision: 1.25         BY: Jean Miller        DATE: 04/10/02  ECO: *P058*  */
 /* Revision: 1.26         BY: Laurene Sheridan   DATE: 12/10/02  ECO: *M219*  */
 /* Revision: 1.28         BY: Paul Donnelly (SB) DATE: 06/28/03  ECO: *Q00L*  */
-/* $Revision: 1.28.5.1 $  BY: Jean Miller        DATE: 09/22/08  ECO: *P4RW*  */
+/* Revision: 1.28.5.1   BY: Jean Miller        DATE: 09/22/08  ECO: *P4RW*  */
+/* $Revision: 1.29 $  BY: Aurimas Blazys        DATE: 2016/07/07  ECO: *YF10*  */
 /*-Revision end---------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -47,6 +48,11 @@
 /* no longer required should be deleted and no in-line patch markers should   */
 /* be added.  The ECO marker should only be included in the Revision History. */
 /******************************************************************************/
+
+/*Y703*/  define input parameter         p__sft01     as logical.
+/*Y704*/  define input parameter         p__sft02     as logical.
+/*Y703*/  define input parameter         p__csb     as logical.
+
 {mfdeclre.i}
 {cxcustom.i "SOSOMTC3.P"}
 {gplabel.i} /* EXTERNAL LABEL INCLUDE */
@@ -66,6 +72,9 @@ define shared variable credit_hold_applied like mfc_logical no-undo.
 define shared variable balance_fmt as character.
 define shared variable limit_fmt as character.
 define shared variable undo_mainblk like mfc_logical no-undo.
+/*YF10*/define variable date         as date.
+/*YF10*/define variable timer         as character.
+/*YF10*/define variable print_list   like mfc_logical initial no.
 
 define shared frame d.
 define shared frame sotot.
@@ -81,7 +90,8 @@ define variable ccOrder         as logical                      no-undo.
 {etdcrvar.i "new"}
 {etsotrla.i} /* Define common variables for SO trailer */
 
-{sosomt01.i} /* Define trailer frame d     (lower frame) */
+/*YF10*  {sosomt01.i}  *YF10*/  /* Define trailer frame d     (lower frame) */
+/*YF10*/{lysosomt01.i} 
 
 find so_mstr where recid(so_mstr) = so_recno.
 
@@ -132,7 +142,8 @@ mainblk:
 do transaction:
 
    undo_trl2 = true.
-   {gprun.i ""sosotrle.p""}
+/*YF10*  {gprun.i ""sosotrle.p""}  *YF10*/
+/*YF10*/   {gprun.i ""lysosotrle.p"" "(input p__sft01, input p__sft02, input p__csb  )"}
    if undo_trl2 then return.
 
 /*      THE ROUTINE MFSOTRL.I TAKES SOD_QTY_ORD - SOD_QTY_CHG AND USES THAT

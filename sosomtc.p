@@ -66,7 +66,8 @@
 /* Revision: 1.27      BY: Jean Miller        DATE: 08/09/01  ECO: *M11Z*   */
 /* Revision: 1.29  BY: B. Gates DATE: 03/04/02 ECO: *N1BT* */
 /* Revision: 1.33  BY: Paul Donnelly (SB) DATE: 06/28/03 ECO: *Q00L* */
-/* $Revision: 1.34 $ BY: Ed van de Gevel DATE: 12/24/03 ECO: *P0SV* */
+/* Revision: 1.34  BY: Ed van de Gevel DATE: 12/24/03 ECO: *P0SV* */
+/* $Revision: 1.34 $ BY: Aurimas Blazys DATE: 2016/07/07 ECO: *YF10* */
 /*-Revision end---------------------------------------------------------------*/
 
 /******************************************************************************/
@@ -85,6 +86,12 @@ this-is-ssm      -   SPECIFIES WHETHER ORDER IS SO OR SSM ORDER
 */
 
 define input parameter this-is-ssm as logical no-undo.
+
+/*YF10*/define input parameter         p__sft01     as logical.
+/*YF10*/define input parameter         p__sft02     as logical.
+/*YF10*/define input parameter         p__csb     as logical.
+/*YF10*/define input parameter         p__qxt     as logical.
+/*YF10*/define input parameter         p__h15     as logical.
 
 define new shared variable convertmode as character no-undo initial "MAINT".
 define new shared variable due_date_range like mfc_logical initial no.
@@ -116,11 +123,23 @@ define variable totalorder as decimal no-undo.
 /* EMT SPECIFIC VARIABLES */
 define variable mc-error-number like msg_nbr no-undo.
 
+
+/*YF10*/define variable date         as date.
+/*YF10*/define variable hours_String 			as character.
+/*YF10*/define variable hours_Int 			as integer.
+/*YF10*/define variable minutes_String 			as character.
+/*YF10*/define variable minutes_Int 			as integer.
+/*YF10*/define variable timer         as character.
+/*YF10*/define variable print_list   like mfc_logical initial no.
+
+
 /* EMT Shared workfiles and variables */
 {sobtbvar.i}
 
 define shared frame d.
 define shared frame sotot.
+
+
 
 {etdcrvar.i "new"}
 {etsotrla.i}
@@ -137,7 +156,8 @@ fields( soc_domain soc_cr_hold)
  where soc_ctrl.soc_domain = global_domain no-lock: end.
 
 /* Define shared frame d */
-{sosomt01.i}
+/*YF10*  {sosomt01.i}  *YF10*/
+/*YF10*/{lysosomt01.i}
 
 maint = yes.
 
@@ -173,6 +193,25 @@ do transaction on error undo, retry:
    if new_order then
       so_print_pl = yes.
 
+/*******************************YF10***********************/
+
+	find first xxso_mstr where xxso_domain = global_domain and xxso_nbr = so_nbr no-lock no-error.
+			if available xxso_mstr then do with frame d:
+				assign
+					date = so_due_date
+					timer = xxso_time
+					print_list = xxso__log01.					
+			end.
+			else do with frame d:
+				assign
+					/*date = ?*/
+					date = so_due_date
+					timer = ""
+					print_list = no.
+			end.
+			
+/*******************************YF10***********************/
+
    display
       so_cr_init
       so_cr_card
@@ -191,8 +230,12 @@ do transaction on error undo, retry:
       print_ih
       edi_ih
       edi_ack
+/*YF10*/      date
+/*YF10*/     timer
+/*YF10*/	  print_list
    with frame d.
-
+   
+  
    /* THE ROUTINE MFSOTRL.I TAKES SOD_QTY_ORD - SOD_QTY_CHG AND USES THAT
     * QUANTITY * THE PRICE TO GET THE ORDER TOTAL (THIS WAY YOU SEE THE
     * DOLLAR AMOUNT FOR THE QUANTITY OPEN ONLY.)  IF THAT CALCULATION IS
@@ -275,12 +318,15 @@ do transaction on error undo, retry:
 end.
 
 undo_mtc3 = true.
-{gprun.i ""sosomtc3.p""}
+/*YF10* {gprun.i ""sosomtc3.p""} *YF10*/
+/*YF10*/{gprun.i ""lysosomtc3.p"" "(input p__sft01, input p__sft01, input p__csb  )"}
+
 
 if not undo_mtc3 then do:
    if undo_mainblk then leave.
    undo_mtc2 = true.
-   {gprun.i ""sosomtc2.p""}
+/*YF10* {gprun.i ""sosomtc2.p""} *YF10*/
+/*YF10*/   {gprun.i ""lysosomtc2.p"" "(input p__qxt, input p__h15)"}
    if undo_mtc2 then undo, retry.
 end.
 

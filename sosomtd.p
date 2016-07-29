@@ -77,7 +77,8 @@
 /* Revision: 1.51.3.7      BY: Sandeep Rohila    DATE: 03/12/09  ECO: *Q2K4* */
 /* Revision: 1.51.3.12     BY: Sandeep Rohila    DATE: 11/30/09  ECO: *Q3M0* */
 /* Revision: 1.51.3.15     BY: Keny Fernandes    DATE: 11/22/11  ECO: *Q54F* */
-/* $Revision: 1.51.3.16 $     BY: Puneeth Kudva        DATE: 05/16/12  ECO: *Q5CL* */
+/* Revision: 1.51.3.16     BY: Puneeth Kudva        DATE: 05/16/12  ECO: *Q5CL* */
+/* $Revision: 1.52 $     BY: Aurimas Blazys        DATE: 2016/07/07  ECO: *YF10* */
 /*-Revision end---------------------------------------------------------------*/
 
 
@@ -1095,6 +1096,7 @@ if use-log-acctg then do:
                             input no)"""}
 end.   /* use-log-acctg */
 
+/*YF10*/  {l4sode05.i}
 delete so_mstr.
 
 del-yn = no.
